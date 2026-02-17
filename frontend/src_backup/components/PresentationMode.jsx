@@ -374,12 +374,12 @@ export default function PresentationMode({
           onToggleTimer();
         }
       }
+      // Removed arrow key navigation - navigation is done from main screen
     };
-
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onExit, onToggleTimer, studyPhase, isTimerRunning, handleStartStudy]);
-
+  }, [onExit, onToggleTimer, studyPhase, isTimerRunning]);
 
   const formatRemainingTime = (seconds) => {
     const isNegative = seconds < 0;

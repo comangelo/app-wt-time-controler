@@ -1,0 +1,53 @@
+/* Main application styles */
+
+/* Animation for entering elements */
+.animate-in {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* Button hover effects */
+.btn-primary {
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.btn-primary:active {
+    transform: scale(0.97);
+}
+
+/* Timer display */
+.timer-display {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
+}
+
+/* Question highlight */
+.question-highlight {
+    background: linear-gradient(90deg, rgba(249, 115, 22, 0.1) 0%, rgba(249, 115, 22, 0.05) 100%);
+    border-left: 3px solid #f97316;
+    padding-left: 12px;
+    margin: 8px 0;
+}
+
+/* Progress ring animation */
+@keyframes progress-ring {
+    from {
+        stroke-dashoffset: 283;
+    }
+}
