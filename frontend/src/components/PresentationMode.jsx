@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Play, 
@@ -351,14 +351,14 @@ export default function PresentationMode({
   const isPhaseOvertime = phaseElapsed > phaseInfo.estimatedTime;
   
   // Navigation handlers
-  const handleStartStudy = () => {
+  const handleStartStudy = useCallback(() => {
     if (onStartStudy) {
       onStartStudy();
     } else {
       onToggleTimer();
     }
     setStudyPhase(PHASES.INTRO);
-  };
+  }, []);
   
   // Handle keyboard
   useEffect(() => {
