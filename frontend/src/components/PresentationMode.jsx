@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Play, 
@@ -149,7 +149,7 @@ export default function PresentationMode({
   
   useEffect(() => {
     setPhaseElapsed(0);
-  }, [studyPhase, currentParagraphIndex, currentReviewQuestion]);
+  }, [onExit, onToggleTimer, studyPhase, isTimerRunning, handleStartStudy]);
 
   // Group paragraphs that belong together based on "grouped_with" field
   const paragraphGroups = useMemo(() => {
