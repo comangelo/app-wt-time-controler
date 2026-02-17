@@ -60,8 +60,11 @@ import { useScheduleCalculator } from "@/hooks/useScheduleCalculator";
 import { addSecondsToDate } from "@/utils/timeFormatters";
 import { darkThemes, defaultDarkTheme } from "@/utils/darkThemes";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL =
+    process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8001";
+
 const API = `${BACKEND_URL}/api`;
+
 
 export default function HomePage() {
   // Core state
