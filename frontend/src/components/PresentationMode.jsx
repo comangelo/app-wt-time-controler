@@ -358,8 +358,9 @@ export default function PresentationMode({
       onToggleTimer();
     }
     setStudyPhase(PHASES.INTRO);
-  }, []);
-  
+  }, [onStartStudy, onToggleTimer, setStudyPhase]);
+
+
   // Handle keyboard
   useEffect(() => {
     const handleKeyDown = (e) => {
