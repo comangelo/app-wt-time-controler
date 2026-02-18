@@ -133,6 +133,16 @@ export default function PresentationMode({
   
   // Use external state - the phase is managed by HomePage
   const setStudyPhase = onPhaseChange || (() => {});
+
+  // Navigation handlers
+  const handleStartStudy = useCallback(() => {
+    if (onStartStudy) {
+      onStartStudy();
+    } else {
+      onToggleTimer();
+    }
+    setStudyPhase(PHASES.INTRO);
+  }, [onStartStudy, onToggleTimer, setStudyPhase]);
   
   const currentReviewQuestion = externalReviewQuestion;
   const setCurrentReviewQuestion = onReviewQuestionChange || (() => {});
@@ -146,10 +156,11 @@ export default function PresentationMode({
     }
     return () => clearInterval(interval);
   }, [isTimerRunning]);
-  
+
   useEffect(() => {
     setPhaseElapsed(0);
-  }, [onExit, onToggleTimer, studyPhase, isTimerRunning, handleStartStudy]);
+  }, [studyPhase]);
+
 
   // Group paragraphs that belong together based on "grouped_with" field
   const paragraphGroups = useMemo(() => {
@@ -350,15 +361,7 @@ export default function PresentationMode({
   const PhaseIcon = phaseInfo.icon;
   const isPhaseOvertime = phaseElapsed > phaseInfo.estimatedTime;
   
-  // Navigation handlers
-  const handleStartStudy = useCallback(() => {
-    if (onStartStudy) {
-      onStartStudy();
-    } else {
-      onToggleTimer();
-    }
-    setStudyPhase(PHASES.INTRO);
-  }, [onStartStudy, onToggleTimer, setStudyPhase]);
+
 
 
   // Handle keyboard
