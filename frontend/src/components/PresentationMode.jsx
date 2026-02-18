@@ -24,7 +24,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { formatTime, formatClockTime, formatTimeCompact } from "../utils/timeFormatters";
+import { formatTime, formatClockTime, formatTimeCompact } from "@/utils/timeFormatters";
 
 // Theme configurations
 const THEMES = {
