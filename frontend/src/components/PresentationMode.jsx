@@ -135,6 +135,14 @@ export default function PresentationMode({
                                          }) {
   const [phaseElapsed, setPhaseElapsed] = useState(0);
 
+  // Calculate actual duration from startTime and endTime
+  const actualDurationMinutes = React.useMemo(() => {
+    if (startTime && endTime) {
+      return Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+    }
+    return Math.round(totalDurationSeconds / 60);
+  }, [startTime, endTime, totalDurationSeconds]);
+
   // Safe fallbacks (evita crashear en prod si algo llega undefined)
   const safeOnExit = onExit || (() => {});
   const safeOnToggleTimer = onToggleTimer || (() => {});
