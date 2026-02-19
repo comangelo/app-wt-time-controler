@@ -225,6 +225,14 @@ export default function HomePage() {
     return groups;
   }, [analysisResult?.paragraphs]);
 
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Presentation mode functions
   const enterPresentationMode = useCallback(() => {
     // Sync presentation phase with current HomePage state before entering
