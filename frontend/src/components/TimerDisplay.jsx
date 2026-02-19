@@ -85,20 +85,35 @@ export function TimerDisplay({
       {/* Start/End Time Display - Always Visible, Responsive */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl border border-slate-700/50" data-testid="time-schedule-card">
         
+        {/* Current Time Clock - Always visible */}
+        <div className="flex justify-center mb-3">
+          <div className="inline-flex items-center gap-2 bg-slate-700/50 rounded-full px-4 py-1.5 border border-slate-600/50">
+            <Clock className="w-4 h-4 text-slate-400" />
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">Hora actual</span>
+            <span 
+              className="text-lg font-bold text-white"
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
+              data-testid="current-time-display"
+            >
+              {formatClockTime(currentTime)}
+            </span>
+          </div>
+        </div>
+        
         {/* Grid layout for times */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center">
           
-          {/* Start Time - Green */}
+          {/* Start Time - Green (empty until started) */}
           <div className="text-center">
             <div className="inline-block bg-emerald-500/20 rounded-lg px-2 py-0.5 mb-1">
               <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Inicio</span>
             </div>
             <p 
-              className={`text-base sm:text-xl md:text-2xl font-black ${startTime ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-emerald-400/60'}`}
+              className={`text-base sm:text-xl md:text-2xl font-black ${startTime ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-slate-500'}`}
               style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
               data-testid="start-time-display"
             >
-              {formatClockTime(displayStartTime)}
+              {startTime ? formatClockTime(startTime) : '--:--'}
             </p>
           </div>
           
