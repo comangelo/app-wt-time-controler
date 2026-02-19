@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatTime, formatClockTime } from "../utils/timeFormatters";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export function TimerDisplay({
   elapsedTime,
@@ -23,21 +23,32 @@ export function TimerDisplay({
   const [isEditingEndTime, setIsEditingEndTime] = useState(false);
   const [editHours, setEditHours] = useState('');
   const [editMinutes, setEditMinutes] = useState('');
+  
+  // Real-time clock state
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Calculate projected times based on current time and configured duration
-  const { displayStartTime, displayEndTime, calculatedDuration } = useMemo(() => {
+  const { displayEndTime, calculatedDuration } = useMemo(() => {
     if (startTime && endTime) {
       const diffMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
-      return { displayStartTime: startTime, displayEndTime: endTime, calculatedDuration: diffMinutes };
+      return { displayEndTime: endTime, calculatedDuration: diffMinutes };
     }
     const now = new Date();
     // Use manual end time if set, otherwise calculate from duration
     if (manualEndTime) {
       const diffMinutes = Math.round((manualEndTime.getTime() - now.getTime()) / 60000);
-      return { displayStartTime: now, displayEndTime: manualEndTime, calculatedDuration: diffMinutes };
+      return { displayEndTime: manualEndTime, calculatedDuration: diffMinutes };
     }
     const projected = new Date(now.getTime() + totalDuration * 60 * 1000);
-    return { displayStartTime: now, displayEndTime: projected, calculatedDuration: totalDuration };
+    return { displayEndTime: projected, calculatedDuration: totalDuration };
   }, [startTime, endTime, totalDuration, manualEndTime]);
 
   // Display duration - use calculated if manual, otherwise use configured
