@@ -1329,6 +1329,7 @@ export default function HomePage() {
           totalDurationSeconds={totalDurationSeconds}
           startTime={startTime}
           endTime={endTime}
+          manualEndTime={manualEndTime}
           introductionTime={introductionDuration}
           conclusionTime={closingWordsDuration}
           onStartStudy={startIntroductionMode}
