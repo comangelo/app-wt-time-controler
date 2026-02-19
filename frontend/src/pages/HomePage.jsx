@@ -783,19 +783,33 @@ export default function HomePage() {
             {/* Time Schedule Panel - Before PDF Upload */}
             <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-700/50">
               
+              {/* Current Time Clock - Always visible */}
+              <div className="flex justify-center mb-4 sm:mb-6">
+                <div className="inline-flex items-center gap-2 sm:gap-3 bg-slate-700/50 rounded-full px-4 sm:px-6 py-2 border border-slate-600/50">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                  <span className="text-xs sm:text-sm text-slate-400 uppercase tracking-wider font-medium">Hora actual</span>
+                  <span 
+                    className="text-xl sm:text-2xl font-bold text-white"
+                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
+                  >
+                    {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                </div>
+              </div>
+              
               {/* Main Time Display Grid */}
               <div className="grid grid-cols-3 gap-4 sm:gap-8 items-center">
                 
-                {/* Start Time - Bright Green */}
+                {/* Start Time - Empty until started */}
                 <div className="text-center">
                   <div className="inline-block bg-emerald-500/20 rounded-xl px-3 py-1 mb-2">
                     <span className="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest">Inicio</span>
                   </div>
                   <p 
-                    className="text-2xl sm:text-4xl md:text-5xl font-black text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                    className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-500"
                     style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
                   >
-                    {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    --:--
                   </p>
                 </div>
                 
