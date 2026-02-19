@@ -136,13 +136,20 @@ export default function PresentationMode({
                                          }) {
   const [phaseElapsed, setPhaseElapsed] = useState(0);
 
-  // Calculate actual duration from startTime and endTime
+  // Calculate actual duration from startTime and endTime, or manualEndTime
   const actualDurationMinutes = React.useMemo(() => {
+    // If study has started, use startTime and endTime
     if (startTime && endTime) {
       return Math.round((endTime.getTime() - startTime.getTime()) / 60000);
     }
+    // If manual end time is set but study hasn't started, calculate from now
+    if (manualEndTime) {
+      const now = new Date();
+      return Math.max(0, Math.round((manualEndTime.getTime() - now.getTime()) / 60000));
+    }
+    // Default to configured duration
     return Math.round(totalDurationSeconds / 60);
-  }, [startTime, endTime, totalDurationSeconds]);
+  }, [startTime, endTime, manualEndTime, totalDurationSeconds]);
 
   // Safe fallbacks (evita crashear en prod si algo llega undefined)
   const safeOnExit = onExit || (() => {});
