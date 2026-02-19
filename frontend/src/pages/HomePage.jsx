@@ -801,7 +801,7 @@ export default function HomePage() {
                     className="text-xl sm:text-2xl font-bold text-white"
                     style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
                   >
-                    {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </span>
                 </div>
               </div>
