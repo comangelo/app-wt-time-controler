@@ -591,7 +591,7 @@ export default function PresentationMode({
                     )} opacity-60`}
                 />
                 <span className="text-xs md:text-sm font-bold text-orange-400 my-1">
-                {Math.round((totalDurationSeconds || 0) / 60)} min
+                {actualDurationMinutes} min
               </span>
                 <div
                     className={`w-8 md:w-14 h-px ${t.border.replace(
