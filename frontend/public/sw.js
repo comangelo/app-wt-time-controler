@@ -1,70 +1,36 @@
-/* eslint-disable no-restricted-globals */
+/* frontend/public/sw.js */
 
-// ⬇️ Sube este número cuando publiques cambios importantes
-const CACHE_VERSION = "v4";
+const CACHE_NAME = "wt-timer-cache-v4";
 
-const CACHE_NAME = `wt-timer-cache-${CACHE_VERSION}`;
-
-// App shell mínimo (NO metas /static/* porque CRA ya se gestiona distinto)
-// Esto hace que sea instalable sin romper nada.
+// App shell mínimo (lo básico para que sea instalable sin romper cosas)
 const APP_SHELL = [
     "/",
     "/index.html",
     "/manifest.json",
 ];
 
-// Detectar backend (ajusta si cambias dominio)
-const BACKEND_HOSTS = new Set([
-    "app-wt-time-controler.onrender.com",
-]);
-
-function isHttpRequest(request) {
-    try {
-        const url = new URL(request.url);
-        return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-        return false;
-    }
-}
-
-function isBackendRequest(request) {
-    try {
-        const url = new URL(request.url);
-
-        // Si tu frontend llama a /api/... en el mismo dominio (proxy), también lo excluimos
-        if (url.pathname.startsWith("/api/")) return true;
-
-        // Si llama directo a Render por hostname, lo excluimos
-        if (BACKEND_HOSTS.has(url.hostname)) return true;
-
-        return false;
-    } catch {
-        return false;
-    }
-}
-
+// INSTALL: toma control rápido
 self.addEventListener("install", (event) => {
     self.skipWaiting();
 
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(APP_SHELL);
-        })
+        (async () => {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.addAll(APP_SHELL);
+        })()
     );
 });
 
+// ACTIVATE: aquí es donde BORRAMOS caches antiguos
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         (async () => {
-            // Borra caches antiguos
             const keys = await caches.keys();
+
             await Promise.all(
-                keys.map((key) => {
-                    if (key.startsWith("wt-timer-cache-") && key !== CACHE_NAME) {
-                        return caches.delete(key);
-                    }
-                    return Promise.resolve();
-                })
+                keys
+                    .filter((k) => k.startsWith("wt-timer-cache-") && k !== CACHE_NAME)
+                    .map((k) => caches.delete(k))
             );
 
             await self.clients.claim();
@@ -72,62 +38,33 @@ self.addEventListener("activate", (event) => {
     );
 });
 
-// Estrategia:
-// - Navegación (HTML): Network-first con fallback a cache (para SPA)
-// - Assets GET (mismo dominio): Stale-while-revalidate
-// - Backend/API: SIEMPRE network (sin cache)
+// FETCH: cache-first SOLO para GET http/https (y NO cachea backend)
 self.addEventListener("fetch", (event) => {
-    const req = event.request;
+    const url = new URL(event.request.url);
 
-    // Ignora esquemas raros: chrome-extension:// etc.
-    if (!isHttpRequest(req)) return;
+    // Ignorar esquemas raros como chrome-extension://
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
 
-    // No cacheamos nada que no sea GET
-    if (req.method !== "GET") return;
+    // Muy importante: NO cachear tu backend (Render)
+    if (url.hostname.includes("onrender.com")) return;
 
-    // No cachear backend / api
-    if (isBackendRequest(req)) return;
+    // No cachear POST/PUT/etc
+    if (event.request.method !== "GET") return;
 
-    const url = new URL(req.url);
+    event.respondWith(
+        (async () => {
+            const cache = await caches.open(CACHE_NAME);
 
-    // 1) Navegación (cuando cambias de vista en la SPA o recargas)
-    if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
-        event.respondWith(
-            (async () => {
-                try {
-                    const fresh = await fetch(req);
-                    // opcional: actualiza cache del index
-                    const cache = await caches.open(CACHE_NAME);
-                    cache.put("/index.html", fresh.clone());
-                    return fresh;
-                } catch (err) {
-                    const cache = await caches.open(CACHE_NAME);
-                    const cached = await cache.match("/index.html");
-                    return cached || Response.error();
-                }
-            })()
-        );
-        return;
-    }
+            // Si existe en cache, úsalo
+            const cached = await cache.match(event.request);
+            if (cached) return cached;
 
-    // 2) Assets en el mismo dominio: stale-while-revalidate
-    // (css/js/icons/imagenes)
-    if (url.origin === self.location.origin) {
-        event.respondWith(
-            (async () => {
-                const cache = await caches.open(CACHE_NAME);
-                const cached = await cache.match(req);
-
-                const fetchPromise = fetch(req)
-                    .then((fresh) => {
-                        if (fresh && fresh.ok) cache.put(req, fresh.clone());
-                        return fresh;
-                    })
-                    .catch(() => null);
-
-                // devuelve cache si existe, si no, espera red
-                return cached || (await fetchPromise) || Response.error();
-            })()
-        );
-    }
+            // Si no, baja de red y guarda
+            const response = await fetch(event.request);
+            if (response && response.ok) {
+                await cache.put(event.request, response.clone());
+            }
+            return response;
+        })()
+    );
 });
