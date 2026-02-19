@@ -71,6 +71,7 @@ export default function HomePage() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   
   // Timer state
   const [isTimerRunning, setIsTimerRunning] = useState(false);
