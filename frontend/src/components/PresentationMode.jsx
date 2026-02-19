@@ -125,6 +125,7 @@ export default function PresentationMode({
                                            totalDurationSeconds = 3600,
                                            startTime,
                                            endTime,
+                                           manualEndTime,
                                            introductionTime = 60,
                                            conclusionTime = 60,
                                            onStartStudy,
