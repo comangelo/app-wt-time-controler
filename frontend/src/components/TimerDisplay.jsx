@@ -51,8 +51,8 @@ export function TimerDisplay({
     return { displayEndTime: projected, calculatedDuration: totalDuration };
   }, [startTime, endTime, totalDuration, manualEndTime]);
 
-  // Display duration - use calculated if manual, otherwise use configured
-  const displayDuration = manualEndTime && !startTime ? calculatedDuration : totalDuration;
+  // Display duration - use calculated duration when we have start and end times, or manual end time
+  const displayDuration = (startTime && endTime) || manualEndTime ? calculatedDuration : totalDuration;
 
   const startEditingEndTime = () => {
     const timeToEdit = manualEndTime || displayEndTime;
