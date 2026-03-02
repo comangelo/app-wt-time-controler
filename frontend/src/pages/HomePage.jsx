@@ -1405,6 +1405,7 @@ export default function HomePage() {
           theme={presentationTheme}
           startTime={startTime}
           endTime={endTime}
+          manualEndTime={manualEndTime}
           introductionTime={introductionDuration}
           conclusionTime={conclusionDuration}
           studyPhase={presentationPhase}
