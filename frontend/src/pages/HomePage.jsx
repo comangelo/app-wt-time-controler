@@ -163,7 +163,6 @@ export default function HomePage() {
     getAdjustedFinalQuestionTime,
     getAdjustedParagraphTimes,
     getFinalQuestionsTimeSeconds,
-    getFinalQuestionsTime,
     getScaleFactor,
     getScaledIntroductionTime,
     getScaledConclusionTime,
@@ -347,8 +346,6 @@ export default function HomePage() {
     const nextIndex = currentManualParagraph + 1;
     setCurrentManualParagraph(nextIndex);
     setParagraphStartTime(Date.now()); // Start timing the next paragraph
-    const now = new Date();
-    setParagraphStartTimes(prev => ({ ...prev, [nextIndex]: now }));
     toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
   }, [currentManualParagraph, analysisResult, paragraphStartTime]);
 
@@ -515,7 +512,6 @@ export default function HomePage() {
     // Don't reset manualEndTime so user keeps their preference
     setNotificationPlayed({ fiveMin: false, oneMin: false, now: false });
     setCurrentManualParagraph(0);
-    setParagraphStartTimes({});
     setLowTimeAlertShown(false);
     setParagraphStats({});
     setParagraphStartTime(null);
@@ -1368,10 +1364,8 @@ export default function HomePage() {
                 />
 
                 <NotificationSettings
-                  soundEnabled={soundEnabled}
-                  setSoundEnabled={setSoundEnabled}
-                  vibrationEnabled={vibrationEnabled}
-                  setVibrationEnabled={setVibrationEnabled}
+                  soundEnabled={setSoundEnabled}
+                  vibrationEnabled={setVibrationEnabled}
                   alertTimes={alertTimes}
                   setAlertTimes={setAlertTimes}
                   onTestSound={() => playNotificationSound('warning')}
