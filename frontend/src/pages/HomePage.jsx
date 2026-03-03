@@ -55,6 +55,7 @@ import { DurationAdjuster } from "@/components/DurationAdjuster";
 // Import hooks
 import { useLocalStorage, useLocalStorageString } from "@/hooks/useLocalStorage";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useUpdateNotifier } from "@/hooks/useUpdateNotifier";
 import { useScheduleCalculator } from "@/hooks/useScheduleCalculator";
 
 // Import utils
@@ -157,6 +158,9 @@ export default function HomePage() {
 
 
   // Custom hooks
+  // Hook to listen for app updates in the background
+  useUpdateNotifier();
+
   const { playNotificationSound, triggerVibration } = useNotifications(soundEnabled, vibrationEnabled);
   const {
     getAdjustedFinalQuestionsTime,
