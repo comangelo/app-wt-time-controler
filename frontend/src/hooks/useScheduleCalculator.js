@@ -69,25 +69,35 @@ export function useScheduleCalculator(
       (sum, p) => sum + (p.reading_time_seconds * scaleFactor), 0
     );
     
-    // Count total questions (paragraphs + final questions)
-    const remainingParagraphsQuestionCount = remainingParagraphs.reduce(
-      (sum, p) => sum + p.questions.length, 0
-    );
-    const totalQuestionCount = remainingParagraphsQuestionCount + finalQuestionsCount;
-    
     // Time available for ALL questions = remaining time - scaled reading time
     const timeForAllQuestions = Math.max(0, remainingTime - scaledReadingTime);
-    
-    // Adjusted time per question (distributed equally among all remaining questions)
-    const adjustedTimePerQuestion = totalQuestionCount > 0 
-      ? Math.round(timeForAllQuestions / totalQuestionCount)
-      : Math.round(35 * scaleFactor);
+
+    // Calculate the "total weight" of all remaining questions
+    let totalQuestionWeight = 0;
+    remainingParagraphs.forEach(p => {
+      // The weight of a paragraph's questions is its reading time
+      totalQuestionWeight += p.questions.length * p.reading_time_seconds;
+    });
+    // The weight of a final question is the standard answer time (35s)
+    totalQuestionWeight += finalQuestionsCount * 35;
+
+    // Calculate the time per unit of weight
+    const timePerWeightUnit = totalQuestionWeight > 0 
+      ? timeForAllQuestions / totalQuestionWeight
+      : 0;
+
+    // The "adjusted time per question" for final questions is now based on its standard weight
+    const adjustedTimeForFinalQuestion = 35 * timePerWeightUnit;
     
     // Time for final questions specifically
-    const totalFinalQuestionsTime = finalQuestionsCount * adjustedTimePerQuestion;
+    const totalFinalQuestionsTime = finalQuestionsCount * adjustedTimeForFinalQuestion;
     
     // Calculate when final questions start (after reading time + paragraph questions)
-    const paragraphsQuestionTime = remainingParagraphsQuestionCount * adjustedTimePerQuestion;
+    let paragraphsQuestionTime = 0;
+    remainingParagraphs.forEach(p => {
+      paragraphsQuestionTime += p.questions.length * (p.reading_time_seconds * timePerWeightUnit);
+    });
+
     const timeUntilFinalQuestions = scaledReadingTime + paragraphsQuestionTime;
     
     const now = new Date();
@@ -98,7 +108,7 @@ export function useScheduleCalculator(
       start: adjustedStart, 
       end: adjustedEnd,
       totalTime: totalFinalQuestionsTime,
-      perQuestion: adjustedTimePerQuestion,
+      perQuestion: adjustedTimeForFinalQuestion, // This is now the specific time for a final question
       originalPerQuestion: Math.round(35 * scaleFactor),
       scaleFactor
     };
@@ -111,6 +121,7 @@ export function useScheduleCalculator(
     const adjusted = getAdjustedFinalQuestionsTime();
     if (!adjusted.start) return null;
     
+    // This remains correct as `adjusted.perQuestion` is now the calculated time for one final question
     return addSecondsToDate(adjusted.start, questionIndex * adjusted.perQuestion);
   }, [startTime, analysisResult, getAdjustedFinalQuestionsTime]);
 
@@ -134,54 +145,62 @@ export function useScheduleCalculator(
         start: paragraphStart, 
         end: paragraphEnd, 
         adjustedDuration: Math.round(scaledDuration),
-        adjustedQuestionTime: Math.round(35 * scaleFactor),
+        adjustedQuestionTime: Math.round(35 * scaleFactor), // This is an approximation for completed items
         isCompleted: true,
         scaleFactor
       };
     }
     
+    // --- NEW LOGIC FOR CURRENT AND FUTURE PARAGRAPHS ---
+
     // Calculate remaining content
     const remainingParagraphs = analysisResult.paragraphs.slice(currentManualParagraph);
     const finalQuestionsCount = analysisResult.final_questions?.length || 0;
     
-    // Scaled total reading time for remaining paragraphs
+    // Scaled total reading time for all remaining paragraphs
     const totalScaledReadingTime = remainingParagraphs.reduce(
       (sum, p) => sum + (p.reading_time_seconds * scaleFactor), 0
     );
     
-    // Total question count (paragraphs + final questions)
-    const totalQuestionCount = remainingParagraphs.reduce(
-      (sum, p) => sum + p.questions.length, 0
-    ) + finalQuestionsCount;
-    
     // Time available for ALL questions
     const timeForAllQuestions = Math.max(0, remainingTime - totalScaledReadingTime);
     
-    // Adjusted time per question
-    const adjustedTimePerQuestion = totalQuestionCount > 0 
-      ? timeForAllQuestions / totalQuestionCount
-      : 35 * scaleFactor;
-    
-    // Calculate start time for this paragraph
+    // Calculate the "total weight" of all remaining questions
+    let totalQuestionWeight = 0;
+    remainingParagraphs.forEach(p => {
+      totalQuestionWeight += p.questions.length * p.reading_time_seconds;
+    });
+    totalQuestionWeight += finalQuestionsCount * 35; // Weight for final questions
+
+    // Calculate the time per unit of weight
+    const timePerWeightUnit = totalQuestionWeight > 0 
+      ? timeForAllQuestions / totalQuestionWeight
+      : 0;
+
+    // The adjusted time for this paragraph's questions
+    const adjustedQuestionTimeForThisParagraph = paragraph.reading_time_seconds * timePerWeightUnit;
+
+    // Calculate start time for this paragraph (the one at `paragraphIndex`)
     let cumulativeTime = 0;
     for (let i = currentManualParagraph; i < paragraphIndex; i++) {
       const p = analysisResult.paragraphs[i];
-      // Scaled reading time + adjusted question time
-      cumulativeTime += (p.reading_time_seconds * scaleFactor) + (p.questions.length * adjustedTimePerQuestion);
+      // Scaled reading time + this paragraph's specific adjusted question time
+      const questionTimeForP = p.questions.length * (p.reading_time_seconds * timePerWeightUnit);
+      cumulativeTime += (p.reading_time_seconds * scaleFactor) + questionTimeForP;
     }
     
     const now = new Date();
     const adjustedStart = addSecondsToDate(now, cumulativeTime);
     
-    // This paragraph's duration: scaled reading + adjusted questions
-    const thisParaDuration = (paragraph.reading_time_seconds * scaleFactor) + (paragraph.questions.length * adjustedTimePerQuestion);
+    // This paragraph's total duration: scaled reading + its specific adjusted question time
+    const thisParaDuration = (paragraph.reading_time_seconds * scaleFactor) + (paragraph.questions.length * adjustedQuestionTimeForThisParagraph);
     const adjustedEnd = addSecondsToDate(adjustedStart, thisParaDuration);
     
     return { 
       start: adjustedStart, 
       end: adjustedEnd, 
       adjustedDuration: Math.round(thisParaDuration),
-      adjustedQuestionTime: Math.round(adjustedTimePerQuestion),
+      adjustedQuestionTime: Math.round(adjustedQuestionTimeForThisParagraph),
       isCompleted: false,
       isCurrent: paragraphIndex === currentManualParagraph,
       scaleFactor

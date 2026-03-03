@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
@@ -22,7 +22,8 @@ import {
   Sun,
   Palette,
   Eye,
-  EyeOff
+  EyeOff,
+  MessageSquarePlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -124,10 +125,11 @@ export default function HomePage() {
   const [paragraphStartTimes, setParagraphStartTimes] = useState({});
   const [lowTimeAlertShown, setLowTimeAlertShown] = useState(false);
   
-  // Statistics tracking - stores actual time spent on each paragraph
+  // Statistics tracking
   const [paragraphStats, setParagraphStats] = useState({});
   const [paragraphStartTime, setParagraphStartTime] = useState(null);
-  
+  const [commentStats, setCommentStats] = useState({ paragraphs: {}, review: {} });
+
   // Review questions navigation
   const [isInReviewMode, setIsInReviewMode] = useState(false);
   const [currentReviewQuestion, setCurrentReviewQuestion] = useState(0);
@@ -145,7 +147,7 @@ export default function HomePage() {
   const [closingWordsDuration, setClosingWordsDuration] = useLocalStorage('pdfTimer_closingWordsDuration', 60); // 1 minute default
   
   // Presentation mode phase state (persists when exiting/entering presentation mode)
-  const [presentationPhase, setPresentationPhase] = useState('intro');
+  const [presentationPhase, setPresentationPhase] = useState('initial');
   const [presentationReviewQuestion, setPresentationReviewQuestion] = useState(0);
   
   // State for editing end time on initial screen (before PDF upload)
@@ -161,7 +163,6 @@ export default function HomePage() {
     getAdjustedFinalQuestionTime,
     getAdjustedParagraphTimes,
     getFinalQuestionsTimeSeconds,
-    getFinalQuestionsTime,
     getScaleFactor,
     getScaledIntroductionTime,
     getScaledConclusionTime,
@@ -175,6 +176,35 @@ export default function HomePage() {
     introductionDuration,
     conclusionDuration
   );
+
+  // Comment handlers
+  const handleAddComment = useCallback((index) => {
+    if (presentationPhase === 'paragraphs') {
+      setCommentStats(prev => ({
+        ...prev,
+        paragraphs: {
+          ...prev.paragraphs,
+          [index]: (prev.paragraphs[index] || 0) + 1,
+        }
+      }));
+      toast.success(`Comentario añadido al párrafo ${index + 1}`);
+    } else if (presentationPhase === 'review') {
+      setCommentStats(prev => ({
+        ...prev,
+        review: {
+          ...prev.review,
+          [index]: (prev.review[index] || 0) + 1,
+        }
+      }));
+      toast.success(`Comentario añadido a la pregunta de repaso ${index + 1}`);
+    }
+  }, [presentationPhase]);
+
+  const totalComments = useMemo(() => {
+    const paragraphComments = Object.values(commentStats.paragraphs).reduce((sum, count) => sum + count, 0);
+    const reviewComments = Object.values(commentStats.review).reduce((sum, count) => sum + count, 0);
+    return paragraphComments + reviewComments;
+  }, [commentStats]);
 
   // Group paragraphs that belong together based on "grouped_with" field
   const groupedParagraphs = React.useMemo(() => {
@@ -249,6 +279,8 @@ export default function HomePage() {
     } else if (!isTimerRunning && currentManualParagraph > 0) {
       // Timer stopped but we've made progress - stay on paragraphs
       newPhase = 'paragraphs';
+    } else if (!startTime) {
+      newPhase = 'initial';
     }
     
     // Update states synchronously - phase first, then show modal
@@ -266,7 +298,7 @@ export default function HomePage() {
         });
       }
     }, 0);
-  }, [isInIntroductionMode, isInReviewMode, isInClosingWordsMode, isTimerRunning, currentManualParagraph, currentReviewQuestion, presentationPhase]);
+  }, [isInIntroductionMode, isInReviewMode, isInClosingWordsMode, isTimerRunning, currentManualParagraph, currentReviewQuestion, presentationPhase, startTime]);
 
   const exitPresentationMode = useCallback(() => {
     setIsPresentationMode(false);
@@ -314,8 +346,6 @@ export default function HomePage() {
     const nextIndex = currentManualParagraph + 1;
     setCurrentManualParagraph(nextIndex);
     setParagraphStartTime(Date.now()); // Start timing the next paragraph
-    const now = new Date();
-    setParagraphStartTimes(prev => ({ ...prev, [nextIndex]: now }));
     toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
   }, [currentManualParagraph, analysisResult, paragraphStartTime]);
 
@@ -441,6 +471,8 @@ export default function HomePage() {
       setStartTime(null);
       setEndTime(null);
       setCurrentManualParagraph(0);
+      setCommentStats({ paragraphs: {}, review: {} }); // Reset comments
+      setPresentationPhase('initial'); // Reset phase
       toast.success("PDF analizado correctamente");
     } catch (error) {
       console.error("Error uploading PDF:", error);
@@ -480,7 +512,6 @@ export default function HomePage() {
     // Don't reset manualEndTime so user keeps their preference
     setNotificationPlayed({ fiveMin: false, oneMin: false, now: false });
     setCurrentManualParagraph(0);
-    setParagraphStartTimes({});
     setLowTimeAlertShown(false);
     setParagraphStats({});
     setParagraphStartTime(null);
@@ -491,6 +522,8 @@ export default function HomePage() {
     setIntroductionStartTime(null);
     setIsInClosingWordsMode(false);
     setClosingWordsStartTime(null);
+    setCommentStats({ paragraphs: {}, review: {} }); // Reset comments
+    setPresentationPhase('initial'); // Reset phase
   };
 
   const resetAll = () => {
@@ -522,12 +555,27 @@ export default function HomePage() {
 
   // Move to first paragraph after introduction
   const goToFirstParagraph = useCallback(() => {
+    if (introductionStartTime) {
+      const actualIntroTime = (Date.now() - introductionStartTime) / 1000;
+      const plannedIntroTime = getScaledIntroductionTime();
+      const timeDifference = plannedIntroTime - actualIntroTime;
+      
+      setRemainingTime(prev => prev + timeDifference);
+      
+      if (Math.abs(timeDifference) > 1) {
+        const message = timeDifference > 0 
+          ? `Ganaste ${Math.round(timeDifference)}s en la introducción. ¡Añadido al resto!`
+          : `Te pasaste ${Math.round(Math.abs(timeDifference))}s en la introducción. ¡Ajustando!`;
+        toast.info(message);
+      }
+    }
+
     setIsInIntroductionMode(false);
     setCurrentManualParagraph(0);
     setParagraphStartTime(Date.now());
     setPresentationPhase('paragraphs'); // Sync presentation phase
     toast.success("Pasando al Párrafo 1");
-  }, []);
+  }, [introductionStartTime, getScaledIntroductionTime]);
 
   // Start review questions mode
   const startReviewMode = useCallback(() => {
@@ -554,20 +602,44 @@ export default function HomePage() {
 
   // Start closing words mode
   const startClosingWordsMode = useCallback(() => {
+    if (reviewQuestionStartTime) {
+      const adjustedTimes = getAdjustedFinalQuestionsTime();
+      const actualReviewTime = (Date.now() - reviewQuestionStartTime) / 1000;
+      const plannedReviewTime = adjustedTimes.totalTime || 0;
+      const timeDifference = plannedReviewTime - actualReviewTime;
+
+      setRemainingTime(prev => prev + timeDifference);
+
+      if (Math.abs(timeDifference) > 1) {
+        const message = timeDifference > 0 
+          ? `Ganaste ${Math.round(timeDifference)}s en el repaso. ¡Añadido a la conclusión!`
+          : `Te pasaste ${Math.round(Math.abs(timeDifference))}s en el repaso. ¡Ajustando!`;
+        toast.info(message);
+      }
+    }
+
     setIsInClosingWordsMode(true);
     setClosingWordsStartTime(Date.now());
     setPresentationPhase('conclusion'); // Sync presentation phase
     toast.success("Iniciando Palabras de Conclusión");
-  }, []);
+  }, [reviewQuestionStartTime, getAdjustedFinalQuestionsTime]);
 
   // Finish study
   const finishStudy = useCallback(() => {
+    if (closingWordsStartTime) {
+      const actualConclusionTime = (Date.now() - closingWordsStartTime) / 1000;
+      const plannedConclusionTime = getScaledConclusionTime();
+      const timeDifference = plannedConclusionTime - actualConclusionTime;
+
+      setRemainingTime(prev => prev + timeDifference);
+    }
+
     setIsTimerRunning(false);
     setIsInClosingWordsMode(false);
     setIsInReviewMode(false);
     setPresentationPhase('finished'); // Sync presentation phase
     toast.success("¡Estudio finalizado! 🎉");
-  }, []);
+  }, [closingWordsStartTime, getScaledConclusionTime]);
 
   // Start from specific paragraph
   const startFromParagraph = useCallback((paragraphIndex) => {
@@ -984,6 +1056,7 @@ export default function HomePage() {
                 totalDurationMinutes={totalDuration}
                 introductionDuration={introductionDuration}
                 closingWordsDuration={closingWordsDuration}
+                totalComments={totalComments}
               />
 
               {/* Paragraph Progress Indicator */}
@@ -1161,10 +1234,8 @@ export default function HomePage() {
                   {groupedParagraphs.map((group, groupIndex) => {
                     const firstIndex = group.indices[0];
                     const lastIndex = group.indices[group.indices.length - 1];
-                    // Show as current if timer is running and we're on this group
                     const isCurrentGroup = isTimerRunning && !isInIntroductionMode && group.indices.includes(currentManualParagraph);
-                    // Show as completed if we've passed this group (regardless of timer state)
-                    const isCompletedGroup = !isInIntroductionMode && lastIndex < currentManualParagraph;
+                    const isCompletedGroup = presentationPhase === 'finished' || (!isInIntroductionMode && lastIndex < currentManualParagraph);
                     
                     return (
                       <ParagraphCard
@@ -1216,6 +1287,8 @@ export default function HomePage() {
                         hasReviewQuestions={analysisResult.final_questions?.length > 0}
                         darkMode={darkMode}
                         showContentGlobal={showAllParagraphContent}
+                        onAddComment={() => handleAddComment(firstIndex)}
+                        commentCount={commentStats.paragraphs[firstIndex] || 0}
                       />
                     );
                   })}
@@ -1246,6 +1319,8 @@ export default function HomePage() {
                   playNotificationSound={playNotificationSound}
                   triggerVibration={triggerVibration}
                   darkMode={darkMode}
+                  onAddComment={handleAddComment}
+                  commentStats={commentStats.review}
                 />
               )}
             </div>
@@ -1289,10 +1364,8 @@ export default function HomePage() {
                 />
 
                 <NotificationSettings
-                  soundEnabled={soundEnabled}
-                  setSoundEnabled={setSoundEnabled}
-                  vibrationEnabled={vibrationEnabled}
-                  setVibrationEnabled={setVibrationEnabled}
+                  soundEnabled={setSoundEnabled}
+                  vibrationEnabled={setVibrationEnabled}
                   alertTimes={alertTimes}
                   setAlertTimes={setAlertTimes}
                   onTestSound={() => playNotificationSound('warning')}
@@ -1321,23 +1394,28 @@ export default function HomePage() {
           remainingTime={remainingTime}
           isTimerRunning={isTimerRunning}
           onToggleTimer={toggleTimer}
-          onResetTimer={resetTimer}
           onExit={exitPresentationMode}
           currentParagraphIndex={currentManualParagraph}
           theme={presentationTheme}
-          onThemeChange={setPresentationTheme}
-          totalDurationSeconds={totalDurationSeconds}
           startTime={startTime}
           endTime={endTime}
           manualEndTime={manualEndTime}
           introductionTime={introductionDuration}
-          conclusionTime={closingWordsDuration}
-          onStartStudy={startIntroductionMode}
+          conclusionTime={conclusionDuration}
           studyPhase={presentationPhase}
           onPhaseChange={setPresentationPhase}
           externalReviewQuestion={presentationReviewQuestion}
           onReviewQuestionChange={setPresentationReviewQuestion}
           scaleFactor={getScaleFactor()}
+          onAddComment={handleAddComment}
+          onStartStudy={startIntroductionMode}
+          onGoToFirstParagraph={goToFirstParagraph}
+          onGoToNext={goToNextParagraph}
+          onStartReview={startReviewMode}
+          onNextReviewQuestion={goToNextReviewQuestion}
+          onStartClosingWords={startClosingWordsMode}
+          onFinishStudy={finishStudy}
+          totalComments={totalComments}
         />
       )}
     </div>

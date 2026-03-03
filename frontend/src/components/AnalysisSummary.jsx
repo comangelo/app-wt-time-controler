@@ -1,4 +1,4 @@
-import { FileText, MessageCircle, HelpCircle, Image, BookOpen, Layers, StickyNote, Clock, Sparkles } from "lucide-react";
+import { FileText, MessageCircle, HelpCircle, Image, BookOpen, Layers, StickyNote, Clock, Sparkles, MessageSquarePlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatTimeCompact } from "../utils/timeFormatters";
 
@@ -42,7 +42,8 @@ export function AnalysisSummary({
   darkMode = false,
   totalDurationMinutes = 60,
   introductionDuration = 60,
-  closingWordsDuration = 60
+  closingWordsDuration = 60,
+  totalComments = 0
 }) {
   if (!analysisResult) return null;
 
@@ -84,7 +85,7 @@ export function AnalysisSummary({
         </div>
 
         {/* Stats Pills Row */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4">
           <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
             darkMode 
               ? 'bg-zinc-700 text-zinc-200 border border-zinc-600' 
@@ -153,6 +154,25 @@ export function AnalysisSummary({
             </div>
           )}
         </div>
+
+        {/* Highlighted Comments Section */}
+        {totalComments > 0 && (
+          <div className={`relative overflow-hidden rounded-2xl p-5 mb-6 text-center ${
+            darkMode 
+              ? 'bg-gradient-to-br from-teal-900 to-cyan-900 border-2 border-cyan-700' 
+              : 'bg-gradient-to-br from-teal-50 to-cyan-100 border-2 border-cyan-200'
+          }`} data-testid="total-comments-count">
+            <div className="flex items-center justify-center gap-3">
+              <MessageSquarePlus className={`w-8 h-8 ${darkMode ? 'text-cyan-300' : 'text-cyan-600'}`} />
+              <div>
+                <p className={`text-4xl font-extrabold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{totalComments}</p>
+                <p className={`text-sm font-semibold uppercase tracking-wider ${darkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                  {totalComments === 1 ? 'Participación' : 'Participaciones'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Time Cards - Modern Grid (2x2 en móvil, 4 columnas en desktop) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
