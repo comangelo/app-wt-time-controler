@@ -625,7 +625,7 @@ export default function HomePage() {
     }
     setIsTimerRunning(true);
     
-    toast.success("Iniciando Palabras de Introducción");
+    // toast.success("Iniciando Palabras de Introducción");
   }, [manualEndTime, totalDurationSeconds]);
 
   // Move to first paragraph after introduction
