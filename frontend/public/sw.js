@@ -108,3 +108,10 @@ async function cacheFirst(req) {
     }
     return fresh;
 }
+
+// Listen for the message from the app to skip waiting and activate the new service worker
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
