@@ -405,7 +405,8 @@ export default function HomePage() {
     
     const nextIndex = currentManualParagraph + 1;
     setCurrentManualParagraph(nextIndex);
-    setParagraphStartTime(Date.now()); // Start timing the next paragraph
+    setParagraphStartTime(Date.now());
+    setCurrentSegmentElapsedTime(0); // Immediately reset timer for the new paragraph
     // toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
   }, [currentManualParagraph, analysisResult, paragraphStartTime]);
 
@@ -413,6 +414,9 @@ export default function HomePage() {
     if (currentManualParagraph <= 0) return;
     const prevIndex = currentManualParagraph - 1;
     setCurrentManualParagraph(prevIndex);
+    // Reset timer when going back to a paragraph
+    setParagraphStartTime(Date.now());
+    setCurrentSegmentElapsedTime(0);
     toast.info(`Volviendo al Párrafo ${prevIndex + 1}`);
   }, [currentManualParagraph]);
 
@@ -1384,6 +1388,7 @@ export default function HomePage() {
                           // Skip to the paragraph after the last one in the group
                           if (lastIndex < analysisResult.paragraphs.length - 1) {
                             setCurrentManualParagraph(lastIndex + 1);
+                            setCurrentSegmentElapsedTime(0); // Immediately reset timer
                             setParagraphStartTime(Date.now());
                             // Save stats for all paragraphs in group (using scaled time)
                             if (paragraphStartTime) {
