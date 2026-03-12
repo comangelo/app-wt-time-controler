@@ -11,6 +11,10 @@ import {
   CheckCircle2,
   MessageSquarePlus,
   ArrowRight,
+  Hand,
+  Image,
+  MessageCircleQuestion,
+  Star,
 } from "lucide-react";
 import { formatTime, formatClockTime } from "@/utils/timeFormatters";
 
@@ -113,6 +117,27 @@ export default function PresentationMode({
     return { colorClass: "bg-red-600", indicatorText: "TIEMPO EXCEDIDO" };
   }, [phaseElapsedTime, estimatedTime, isTimerRunning]);
 
+  // Extract content types for the current paragraph group to display badges
+  const { hasImageContent, hasScriptureContent, hasNoteContent, uniqueHighlightContents } = useMemo(() => {
+    if (studyPhase !== PHASES.PARAGRAPHS || !currentParagraphGroup) {
+      return {};
+    }
+    
+    const allQuestions = currentParagraphGroup.paragraphs.flatMap(p => p.questions);
+    
+    const highlights = allQuestions
+      .filter(q => q.highlight_contents && q.highlight_contents.length > 0)
+      .flatMap(q => q.highlight_contents);
+
+    return {
+      hasImageContent: allQuestions.some(q => q.content_type?.includes('image')),
+      hasScriptureContent: allQuestions.some(q => q.content_type?.includes('scripture')),
+      hasNoteContent: allQuestions.some(q => q.content_type?.includes('note')),
+      uniqueHighlightContents: [...new Set(highlights)]
+    };
+  }, [studyPhase, currentParagraphGroup]);
+
+
   const handleSmartButton = () => {
     if (studyPhase === 'initial') {
       onStartStudy?.();
@@ -162,58 +187,88 @@ export default function PresentationMode({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-900 text-white flex flex-col p-4 md:p-6">
+    <div className="fixed inset-0 z-[9999] bg-slate-900 text-white flex flex-col p-4 md:p-6 landscape:py-2 landscape:px-4">
       {/* Top Bar */}
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-4 landscape:mb-2">
         {/* Time Grid */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <div className="text-left">
             <p className="text-sm md:text-base font-semibold text-slate-400">Hora Actual</p>
-            <p className="text-3xl md:text-5xl font-bold text-white">{formatClockTime(currentTime)}</p>
+            <p className="text-3xl md:text-5xl landscape:text-3xl font-bold text-white">{formatClockTime(currentTime)}</p>
           </div>
           <div className="text-right">
             <p className="text-sm md:text-base font-semibold text-cyan-400">Hora de Fin</p>
-            <p className="text-3xl md:text-5xl font-bold text-cyan-400" style={{ fontFamily: "'Orbitron', sans-serif" }}>{endTime ? formatClockTime(endTime) : "--:--"}</p>
+            <p className="text-3xl md:text-5xl landscape:text-3xl font-bold text-cyan-400" style={{ fontFamily: "'Orbitron', sans-serif" }}>{endTime ? formatClockTime(endTime) : "--:--"}</p>
           </div>
           <div className="text-left">
             <p className="text-sm md:text-base font-semibold text-slate-400">Transcurrido</p>
-            <p className="text-3xl md:text-5xl font-light text-green-400">{formatTime(elapsedTime)}</p>
+            <p className="text-3xl md:text-5xl landscape:text-3xl font-light text-green-400">{formatTime(elapsedTime)}</p>
           </div>
           <div className="text-right">
             <p className="text-sm md:text-base font-semibold text-slate-400">Restante</p>
-            <p className="text-3xl md:text-5xl font-light text-orange-400">{formatTime(remainingTime)}</p>
+            <p className="text-3xl md:text-5xl landscape:text-3xl font-light text-orange-400">{formatTime(remainingTime)}</p>
           </div>
         </div>
         {/* Comments Display */}
-        <div className="text-center bg-slate-800/50 border border-slate-700 rounded-2xl p-4">
+        <div className="text-center bg-slate-800/50 border border-slate-700 rounded-2xl p-4 landscape:p-2">
           <p className="text-sm md:text-base font-semibold text-slate-400">Participaciones</p>
           <div className="flex items-center justify-center gap-2">
             <MessageSquarePlus className="w-8 h-8 text-blue-400" />
-            <p className="text-5xl font-extrabold text-white">{totalComments}</p>
+            <p className="text-5xl landscape:text-4xl font-extrabold text-white">{totalComments}</p>
           </div>
         </div>
       </div>
 
       {/* Center Content */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className={`w-full max-w-2xl rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 p-6 shadow-2xl ${colorClass}`}>
-          <p className="text-white text-2xl md:text-3xl font-bold tracking-widest">{indicatorText}</p>
-          <p className="text-white text-6xl md:text-8xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
-          <p className="text-white/70 text-2xl md:text-3xl font-light">/ {formatTime(Math.round(estimatedTime))}</p>
+        <div className={`w-full max-w-2xl rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 p-6 landscape:p-2 shadow-2xl ${colorClass}`}>
+          <p className="text-white text-2xl md:text-3xl landscape:text-xl font-bold tracking-widest">{indicatorText}</p>
+          <p className="text-white text-6xl md:text-8xl landscape:text-6xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
+          <p className="text-white/70 text-2xl md:text-3xl landscape:text-xl font-light">/ {formatTime(Math.round(estimatedTime))}</p>
         </div>
-        <div className="text-center mt-4">
-          <p className="text-2xl md:text-3xl font-bold">{phaseInfo.title}</p>
-          <p className="text-lg md:text-xl text-slate-400">{phaseInfo.subtitle}</p>
+        <div className="text-center mt-4 landscape:mt-2">
+          <p className="text-2xl md:text-3xl landscape:text-xl font-bold">{phaseInfo.title}</p>
+          <p className="text-lg md:text-xl landscape:text-base text-slate-400">{phaseInfo.subtitle}</p>
+
+          {/* Paragraph Content Badges */}
+          {studyPhase === PHASES.PARAGRAPHS && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 landscape:mt-2">
+              {hasImageContent && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-900/70 text-purple-200 border border-purple-700">
+                  <Image className="w-3.5 h-3.5" />
+                  Contiene imagen
+                </span>
+              )}
+              {hasScriptureContent && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-900/70 text-blue-200 border border-blue-700">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Texto para leer
+                </span>
+              )}
+              {hasNoteContent && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-900/70 text-amber-200 border border-amber-700">
+                  <MessageCircleQuestion className="w-3.5 h-3.5" />
+                  Nota de estudio
+                </span>
+              )}
+              {uniqueHighlightContents?.map((highlightText, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-900/70 text-cyan-200 border border-cyan-700">
+                  <Star className="w-3.5 h-3.5" />
+                  {highlightText}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex items-stretch gap-4">
+      <div className="flex flex-col items-center gap-4 landscape:gap-2">
+        <div className="flex items-center justify-center gap-6">
           <Button
             onClick={handleSmartButton}
             size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-8 py-10 text-xl h-auto"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-8 py-10 landscape:py-5 landscape:px-6 text-xl landscape:text-lg h-auto"
           >
             {studyPhase === 'initial' ? <Play className="w-6 h-6 mr-3" /> : <ArrowRight className="w-6 h-6 mr-3" />}
             {getSmartButtonText()}
@@ -221,16 +276,13 @@ export default function PresentationMode({
           {studyPhase !== 'initial' && (
             <Button
               onClick={handleAddCommentClick}
-              variant="outline"
-              size="lg"
-              className="rounded-2xl px-6 py-10 text-xl h-auto border-slate-600 text-slate-300 hover:text-white hover:border-slate-400"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full w-24 h-24 landscape:w-20 landscape:h-20 flex items-center justify-center shadow-lg transition-all active:scale-95"
             >
-              <MessageSquarePlus className="w-6 h-6 mr-3" />
-              Participación
+              <Hand className="w-16 h-16 landscape:w-14 landscape:h-14" />
             </Button>
           )}
         </div>
-        <div className="h-12 flex items-center"> {/* Spacer to prevent layout shift */}
+        <div className="h-12 landscape:h-10 flex items-center"> {/* Spacer to prevent layout shift */}
           {studyPhase !== 'initial' && (
             <Button onClick={onExit} variant="ghost" className="text-slate-400 hover:text-white">
               <X className="w-5 h-5 mr-2" />
