@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Play, Clock, ArrowRight, ChevronDown, ChevronUp, MessageCircleQuestion, Check, Timer, Eye, EyeOff, Image, BookOpen, MessageSquarePlus } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Play, Clock, ArrowRight, ChevronDown, ChevronUp, MessageCircleQuestion, Check, Timer, Eye, EyeOff, Image, BookOpen, MessageSquarePlus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,7 +18,7 @@ export function ParagraphCard({
   isTimerRunning, 
   isCurrentParagraph, 
   isCompletedParagraph, 
-  elapsedTime, 
+  paragraphElapsed = 0, 
   onGoToNext, 
   isLastParagraph,
   adjustedQuestionTime,
@@ -37,10 +37,8 @@ export function ParagraphCard({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showContent, setShowContent] = useState(true); // Individual content visibility
-  const [paragraphElapsed, setParagraphElapsed] = useState(0);
   const [overtimeAlertTriggered, setOvertimeAlertTriggered] = useState(false);
   const cardRef = useRef(null);
-  const paragraphTimerRef = useRef(null);
   
   // Sync with global show/hide state
   useEffect(() => {
@@ -64,11 +62,24 @@ export function ParagraphCard({
   const hasScriptureContent = allQuestions.some(q => q.content_type === 'scripture' || q.content_type === 'both');
   const hasNoteContent = allQuestions.some(q => q.content_type === 'note');
 
+  // New: Extract unique "important idea" texts for dynamic badges
+  const highlightContents = useMemo(() => {
+    const highlights = allQuestions
+      .filter(q => q.highlight_content)
+      .map(q => q.highlight_content);
+    // Return unique values
+    return [...new Set(highlights)];
+  }, [allQuestions]);
+
   // Get estimated time for this paragraph group (apply scale factor for proportional adjustment)
   const estimatedTime = isGrouped 
     ? allParagraphs.reduce((sum, p) => sum + ((p.total_time_seconds || 0) * scaleFactor), 0)
     : (paragraphTimes.adjustedDuration || (paragraph.total_time_seconds * scaleFactor));
   const isOverTime = paragraphElapsed > estimatedTime;
+  const timeRatio = estimatedTime > 0 ? paragraphElapsed / estimatedTime : 0;
+  const isWarningTime = timeRatio > 1 && timeRatio <= 1.3;
+  const isDangerTime = timeRatio > 1.3;
+
 
   // Auto-scroll to current paragraph
   useEffect(() => {
@@ -101,36 +112,6 @@ export function ParagraphCard({
     }
   }, [isCurrentParagraph]);
 
-  // Paragraph timer - starts when this becomes the current paragraph
-  useEffect(() => {
-    if (isCurrentParagraph && isTimerRunning) {
-      // Reset timer when this paragraph becomes active
-      setParagraphElapsed(0);
-      setOvertimeAlertTriggered(false);
-      
-      // Start counting
-      paragraphTimerRef.current = setInterval(() => {
-        setParagraphElapsed(prev => prev + 1);
-      }, 1000);
-    } else {
-      // Stop timer when not current or not running
-      if (paragraphTimerRef.current) {
-        clearInterval(paragraphTimerRef.current);
-        paragraphTimerRef.current = null;
-      }
-      // Reset when no longer current
-      if (!isCurrentParagraph) {
-        setParagraphElapsed(0);
-      }
-    }
-
-    return () => {
-      if (paragraphTimerRef.current) {
-        clearInterval(paragraphTimerRef.current);
-      }
-    };
-  }, [isCurrentParagraph, isTimerRunning]);
-
   // Format paragraph elapsed time as MM:SS
   const formatParagraphTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -148,10 +129,12 @@ export function ParagraphCard({
             ? darkMode 
               ? 'border-zinc-600 bg-zinc-800/50 opacity-70'
               : 'border-slate-200 bg-slate-50/50 opacity-70'
-            : isCurrentParagraph 
-              ? isOverTime
-                ? 'border-red-400 bg-red-50 shadow-lg shadow-red-100 scale-[1.01]'
-                : 'border-green-400 bg-green-50 shadow-lg shadow-green-100 scale-[1.01]' 
+          : isCurrentParagraph
+            ? isDangerTime
+              ? (darkMode ? 'border-red-600 bg-red-950/70' : 'border-red-500 bg-red-100') + ' shadow-lg shadow-red-200 scale-[1.01]'
+              : isWarningTime
+                ? (darkMode ? 'border-orange-500 bg-orange-950/70' : 'border-orange-400 bg-orange-100') + ' shadow-lg shadow-orange-200 scale-[1.01]'
+                : (darkMode ? 'border-green-500 bg-green-950/70' : 'border-green-400 bg-green-100') + ' shadow-lg shadow-green-200 scale-[1.01]'
               : hasFinalQuestions 
                 ? darkMode
                   ? 'border-red-600 bg-red-950/50 hover:border-red-500'
@@ -181,26 +164,28 @@ export function ParagraphCard({
         {/* Current Paragraph Indicator with Timer - Redesigned */}
         {isCurrentParagraph && (
           <div className={`absolute top-0 left-0 right-0 text-white text-xs font-bold rounded-t-2xl transition-colors ${
-            isOverTime 
-              ? 'bg-gradient-to-r from-red-500 to-red-600' 
-              : 'bg-gradient-to-r from-green-500 to-green-600'
+            isDangerTime 
+              ? 'bg-gradient-to-r from-red-500 to-red-600'
+              : isWarningTime
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                : 'bg-gradient-to-r from-green-500 to-green-600'
           }`}>
             {/* Main row */}
             <div className="flex items-center justify-between px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOverTime ? 'bg-red-200' : 'bg-white'}`}></span>
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isOverTime ? 'bg-red-200' : 'bg-white'}`}></span>
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOverTime ? (isDangerTime ? 'bg-red-200' : 'bg-orange-200') : 'bg-white'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isOverTime ? (isDangerTime ? 'bg-red-200' : 'bg-orange-200') : 'bg-white'}`}></span>
                 </span>
-                <span className="text-[11px] sm:text-xs tracking-wide">
-                  {isOverTime ? 'TIEMPO EXCEDIDO' : 'LEYENDO'}
+                <span className="text-base sm:text-lg tracking-wide font-bold">
+                  {isDangerTime ? 'TIEMPO EXCEDIDO' : isWarningTime ? 'TIEMPO DE PRORROGA' : 'EN TIEMPO'}
                 </span>
               </div>
               
               {/* Timer display - elegant and minimal */}
               {isTimerRunning && (
                 <div className={`flex items-baseline gap-1 px-3 py-1.5 rounded-full backdrop-blur-sm ${
-                  isOverTime ? 'bg-red-500/40' : 'bg-black/20'
+                  isDangerTime ? 'bg-red-500/40' : isWarningTime ? 'bg-orange-500/40' : 'bg-black/20'
                 }`}>
                   <span className="font-light text-lg tracking-wide tabular-nums">
                     {formatParagraphTime(paragraphElapsed)}
@@ -216,8 +201,10 @@ export function ParagraphCard({
             {/* Overtime badge - separate row */}
             {isOverTime && (
               <div className="px-4 pb-2 -mt-1">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-700 text-white text-[10px] font-bold rounded-full animate-pulse">
-                  ⚠️ +{formatParagraphTime(paragraphElapsed - Math.round(estimatedTime))} excedido
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-white text-[10px] font-bold rounded-full animate-pulse ${
+                  isDangerTime ? 'bg-red-700' : 'bg-orange-700'
+                }`}>
+                  ⚠️ +{formatParagraphTime(paragraphElapsed - Math.round(estimatedTime))} {isDangerTime ? 'excedido' : 'de prórroga'}
                 </span>
               </div>
             )}
@@ -277,9 +264,19 @@ export function ParagraphCard({
                     : 'bg-amber-100 text-amber-700 border border-amber-200'
                 }`} data-testid={`note-badge-${paragraph.number}`}>
                   <MessageCircleQuestion className="w-3.5 h-3.5" />
-                  Nota para comentar
+                  Nota de estudio
                 </span>
               )}
+              {highlightContents.map((highlightText, idx) => (
+                <span key={idx} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  darkMode
+                    ? 'bg-cyan-900/70 text-cyan-200 border border-cyan-700'
+                    : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
+                }`} data-testid={`highlight-badge-${paragraph.number}-${idx}`}>
+                  <Star className="w-3.5 h-3.5" />
+                  {highlightText}
+                </span>
+              ))}
             </div>
             <div className="flex items-center gap-3">
               {/* Individual show/hide content button - more spacing */}
@@ -570,10 +567,22 @@ export function ParagraphCard({
                               <span>{q.text}</span>
                               {/* Show parenthesis content inline */}
                               {hasExtraContent && (
-                                <span className={`ml-1 ${
-                                  darkMode ? 'text-zinc-400' : 'text-slate-500'
-                                }`}>
-                                  ({q.parenthesis_content})
+                                <span className={`ml-1 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+                                  (
+                                    {q.content_type?.includes('highlight') ? (
+                                      q.parenthesis_content.split(/"(.*?)"/).map((part, i) =>
+                                        i % 2 === 1 ? (
+                                          <span key={i} className={`font-semibold ${darkMode ? 'text-cyan-300' : 'text-cyan-600'}`}>
+                                            "{part}"
+                                          </span>
+                                        ) : (
+                                          <span key={i}>{part}</span>
+                                        )
+                                      )
+                                    ) : (
+                                      q.parenthesis_content
+                                    )}
+                                  )
                                 </span>
                               )}
                             </div>

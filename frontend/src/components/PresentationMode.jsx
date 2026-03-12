@@ -37,6 +37,7 @@ export default function PresentationMode({
   conclusionTime = 60,
   studyPhase = "initial",
   externalReviewQuestion = 0,
+  phaseElapsedTime = 0,
   onAddComment,
   onStartStudy,
   onGoToFirstParagraph,
@@ -47,8 +48,9 @@ export default function PresentationMode({
   onFinishStudy,
   scaleFactor = 1,
   totalComments = 0,
+  currentParagraphGroup,
+  getAdjustedParagraphTimes,
 }) {
-  const [phaseElapsed, setPhaseElapsed] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update current time every second
@@ -56,20 +58,6 @@ export default function PresentationMode({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Phase elapsed timer
-  useEffect(() => {
-    let interval;
-    if (isTimerRunning) {
-      interval = setInterval(() => setPhaseElapsed((prev) => prev + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerRunning]);
-
-  // Reset phase timer when phase or paragraph/question changes
-  useEffect(() => {
-    setPhaseElapsed(0);
-  }, [studyPhase, currentParagraphIndex, externalReviewQuestion]);
 
   const { phaseInfo, estimatedTime } = useMemo(() => {
     let info = { title: "Esperando para iniciar", icon: Play, subtitle: "Presiona Iniciar Estudio", estimated: 0 };
@@ -79,8 +67,28 @@ export default function PresentationMode({
           info = { title: "Introducción", icon: Mic, subtitle: "Presentando el tema", estimated: introductionTime * scaleFactor };
           break;
         case PHASES.PARAGRAPHS:
-          const paragraph = analysisResult?.paragraphs[currentParagraphIndex];
-          info = { title: `Párrafo ${paragraph?.number || ''}`, icon: BookOpen, subtitle: `de ${analysisResult?.total_paragraphs || 0} párrafos`, estimated: (paragraph?.total_time_seconds || 0) * scaleFactor };
+          if (currentParagraphGroup && getAdjustedParagraphTimes) {
+            const isGrouped = currentParagraphGroup.paragraphs.length > 1;
+            const paragraphNumbers = currentParagraphGroup.paragraphs.map(p => p.number).join(', ');
+
+            let calculatedTime = 0;
+            if (isGrouped) {
+                calculatedTime = currentParagraphGroup.paragraphs.reduce((sum, p) => sum + ((p.total_time_seconds || 0) * scaleFactor), 0);
+            } else {
+                const paragraphTimes = getAdjustedParagraphTimes(currentParagraphGroup.indices[0]);
+                calculatedTime = paragraphTimes.adjustedDuration || (currentParagraphGroup.firstParagraph.total_time_seconds * scaleFactor);
+            }
+
+            info = {
+              title: isGrouped ? `Párrafos ${paragraphNumbers}` : `Párrafo ${currentParagraphGroup.firstParagraph.number}`,
+              icon: BookOpen,
+              subtitle: `de ${analysisResult?.total_paragraphs || 0} párrafos`,
+              estimated: calculatedTime
+            };
+          } else {
+            const paragraph = analysisResult?.paragraphs[currentParagraphIndex];
+            info = { title: `Párrafo ${paragraph?.number || ''}`, icon: BookOpen, subtitle: `de ${analysisResult?.total_paragraphs || 0} párrafos`, estimated: (paragraph?.total_time_seconds || 0) * scaleFactor };
+          }
           break;
         case PHASES.REVIEW:
           const question = analysisResult?.final_questions[externalReviewQuestion];
@@ -95,15 +103,15 @@ export default function PresentationMode({
       }
     }
     return { phaseInfo: info, estimatedTime: info.estimated };
-  }, [studyPhase, currentParagraphIndex, externalReviewQuestion, analysisResult, introductionTime, conclusionTime, scaleFactor]);
+  }, [studyPhase, currentParagraphIndex, externalReviewQuestion, analysisResult, introductionTime, conclusionTime, scaleFactor, currentParagraphGroup, getAdjustedParagraphTimes]);
 
   const { colorClass, indicatorText } = useMemo(() => {
     if (!isTimerRunning || estimatedTime === 0) return { colorClass: "bg-gray-600", indicatorText: "EN PAUSA" };
-    const ratio = phaseElapsed / estimatedTime;
-    if (ratio <= 1) return { colorClass: "bg-green-600", indicatorText: "A TIEMPO" };
-    if (ratio <= 1.3) return { colorClass: "bg-orange-500", indicatorText: "MODERAR" };
-    return { colorClass: "bg-red-600", indicatorText: "ACELERAR" };
-  }, [phaseElapsed, estimatedTime, isTimerRunning]);
+    const ratio = phaseElapsedTime / estimatedTime;
+    if (ratio <= 1) return { colorClass: "bg-green-600", indicatorText: "EN TIEMPO" };
+    if (ratio <= 1.3) return { colorClass: "bg-orange-500", indicatorText: "TIEMPO DE PRORROGA" };
+    return { colorClass: "bg-red-600", indicatorText: "TIEMPO EXCEDIDO" };
+  }, [phaseElapsedTime, estimatedTime, isTimerRunning]);
 
   const handleSmartButton = () => {
     if (studyPhase === 'initial') {
@@ -190,7 +198,7 @@ export default function PresentationMode({
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className={`w-full max-w-2xl rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 p-6 shadow-2xl ${colorClass}`}>
           <p className="text-white text-2xl md:text-3xl font-bold tracking-widest">{indicatorText}</p>
-          <p className="text-white text-6xl md:text-8xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsed)}</p>
+          <p className="text-white text-6xl md:text-8xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
           <p className="text-white/70 text-2xl md:text-3xl font-light">/ {formatTime(Math.round(estimatedTime))}</p>
         </div>
         <div className="text-center mt-4">

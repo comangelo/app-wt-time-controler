@@ -67,6 +67,50 @@ const BACKEND_URL =
 
 const API = `${BACKEND_URL}/api`;
 
+/**
+ * Augments the analysis result by identifying "important ideas" in questions,
+ * adding a 'highlight' content type, and adjusting time calculations.
+ * @param {object} result The original analysis result from the backend.
+ * @param {number} timePerHighlight The number of seconds to add for each highlight found.
+ * @returns {object} The augmented analysis result.
+ */
+const augmentAnalysisResultWithHighlights = (result, timePerHighlight) => {
+  if (!result || !result.paragraphs) return result;
+
+  const augmentedResult = { ...result };
+  let totalAddedTime = 0;
+  let totalHighlights = 0;
+
+  augmentedResult.paragraphs = augmentedResult.paragraphs.map(p => {
+    let highlightsInParagraph = 0;
+    const newQuestions = p.questions.map(q => {
+      // Use regex to find and extract content within quotes
+      const match = q.parenthesis_content?.match(/"(.*?)"/);
+      if (match && match[1]) {
+        highlightsInParagraph++;
+        const newContentType = q.content_type ? `${q.content_type}_highlight` : 'highlight';
+        // Add the extracted text to the question object
+        return { ...q, content_type: newContentType, highlight_content: match[1] };
+      }
+      return q;
+    });
+
+    if (highlightsInParagraph > 0) {
+      const addedTime = highlightsInParagraph * timePerHighlight;
+      totalAddedTime += addedTime;
+      totalHighlights += highlightsInParagraph;
+      return { ...p, questions: newQuestions, total_time_seconds: p.total_time_seconds + addedTime };
+    }
+    return p;
+  });
+
+  if (totalAddedTime > 0) {
+    augmentedResult.total_time_seconds += totalAddedTime;
+    toast.info(`${totalHighlights} "Ideas importantes" encontradas. Se añadieron ${totalAddedTime}s al tiempo total.`);
+  }
+
+  return augmentedResult;
+};
 
 export default function HomePage() {
   // Core state
@@ -155,6 +199,9 @@ export default function HomePage() {
   const [isEditingInitialEndTime, setIsEditingInitialEndTime] = useState(false);
   const [initialEditHours, setInitialEditHours] = useState('');
   const [initialEditMinutes, setInitialEditMinutes] = useState('');
+  
+  // State for current segment (paragraph, intro, etc.) elapsed time
+  const [currentSegmentElapsedTime, setCurrentSegmentElapsedTime] = useState(0);
 
 
   // Custom hooks
@@ -258,6 +305,11 @@ export default function HomePage() {
     
     return groups;
   }, [analysisResult?.paragraphs]);
+
+  const currentParagraphGroup = useMemo(() => {
+    if (!analysisResult?.paragraphs) return null;
+    return groupedParagraphs.find(g => g.indices.includes(currentManualParagraph));
+  }, [analysisResult, groupedParagraphs, currentManualParagraph]);
 
   // Update current time every second
   useEffect(() => {
@@ -434,20 +486,58 @@ export default function HomePage() {
   useEffect(() => {
     if (isTimerRunning) {
       timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-        setRemainingTime(prev => Math.max(0, prev - 1));
+        const now = Date.now();
+        
+        // Recalculate from start/end times to prevent drift from setInterval throttling
+        if (startTime && endTime) {
+          const elapsed = Math.round((now - startTime.getTime()) / 1000);
+          const remaining = Math.round((endTime.getTime() - now) / 1000);
+          setElapsedTime(elapsed);
+          setRemainingTime(remaining);
+        }
+
+        // Calculate current segment elapsed time to sync timers
+        let segmentStart = null;
+        if (isInIntroductionMode) {
+            segmentStart = introductionStartTime;
+        } else if (isInReviewMode) {
+            segmentStart = reviewQuestionStartTime;
+        } else if (isInClosingWordsMode) {
+            segmentStart = closingWordsStartTime;
+        } else if (currentManualParagraph >= 0 && paragraphStartTime) {
+            segmentStart = paragraphStartTime;
+        }
+
+        if (segmentStart) {
+            setCurrentSegmentElapsedTime(Math.round((now - segmentStart) / 1000));
+        } else {
+            // If no segment is active, reset its timer
+            setCurrentSegmentElapsedTime(0);
+        }
       }, 1000);
     } else {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     }
-    return () => {
+    return () => { // Cleanup
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [isTimerRunning]);
+  }, [
+    isTimerRunning, 
+    startTime, 
+    endTime, 
+    isInIntroductionMode, 
+    introductionStartTime, 
+    isInReviewMode, 
+    reviewQuestionStartTime, 
+    isInClosingWordsMode, 
+    closingWordsStartTime, 
+    currentManualParagraph, 
+    paragraphStartTime
+  ]);
 
   // File upload handler
   const handleFileUpload = async (file) => {
@@ -469,7 +559,9 @@ export default function HomePage() {
         }
       );
       
-      setAnalysisResult(response.data);
+      const finalResult = augmentAnalysisResultWithHighlights(response.data, answerTime);
+      
+      setAnalysisResult(finalResult);
       setElapsedTime(0);
       setIsTimerRunning(false);
       setStartTime(null);
@@ -1253,7 +1345,7 @@ export default function HomePage() {
                         isTimerRunning={isTimerRunning && !isInIntroductionMode}
                         isCurrentParagraph={isCurrentGroup}
                         isCompletedParagraph={isCompletedGroup || isInReviewMode}
-                        elapsedTime={elapsedTime}
+                        paragraphElapsed={isCurrentGroup ? currentSegmentElapsedTime : 0}
                         onGoToNext={() => {
                           // Skip to the paragraph after the last one in the group
                           if (lastIndex < analysisResult.paragraphs.length - 1) {
@@ -1408,6 +1500,7 @@ export default function HomePage() {
           conclusionTime={conclusionDuration}
           studyPhase={presentationPhase}
           onPhaseChange={setPresentationPhase}
+          phaseElapsedTime={currentSegmentElapsedTime}
           externalReviewQuestion={presentationReviewQuestion}
           onReviewQuestionChange={setPresentationReviewQuestion}
           scaleFactor={getScaleFactor()}
@@ -1420,6 +1513,8 @@ export default function HomePage() {
           onStartClosingWords={startClosingWordsMode}
           onFinishStudy={finishStudy}
           totalComments={totalComments}
+          currentParagraphGroup={currentParagraphGroup}
+          getAdjustedParagraphTimes={getAdjustedParagraphTimes}
         />
       )}
     </div>
