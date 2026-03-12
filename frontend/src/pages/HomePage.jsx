@@ -963,163 +963,166 @@ export default function HomePage() {
         {!analysisResult ? (
           <div className="space-y-4 sm:space-y-8">
             {/* Time Schedule Panel - Before PDF Upload */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-700/50">
-              
+            <div className="bg-gradient-to-br from-zinc-800 to-zinc-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl border border-zinc-600">
+
               {/* Current Time Clock - Always visible */}
               <div className="flex justify-center mb-4 sm:mb-6">
-                <div className="inline-flex items-center gap-2 sm:gap-3 bg-slate-700/50 rounded-full px-4 sm:px-6 py-2 border border-slate-600/50">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                  <span className="text-xs sm:text-sm text-slate-400 uppercase tracking-wider font-medium">Hora actual</span>
-                  <span 
-                    className="text-xl sm:text-2xl font-bold text-white"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
+                <div className="inline-flex items-center gap-2 sm:gap-3 bg-zinc-700/50 rounded-full px-4 sm:px-6 py-2 border border-zinc-600">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400" />
+                  <span className="text-xs sm:text-sm text-zinc-400 uppercase tracking-wider font-medium">Hora actual</span>
+                  <span
+                      className="text-xl sm:text-2xl font-bold text-white"
+                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
                   >
-                    {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </span>
+        {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+              </span>
                 </div>
               </div>
-              
+
               {/* Main Time Display Grid */}
               <div className="grid grid-cols-3 gap-4 sm:gap-8 items-center">
-                
+
                 {/* Start Time - Empty until started */}
                 <div className="text-center">
-                  <div className="inline-block bg-emerald-500/20 rounded-xl px-3 py-1 mb-2">
+                  <div className="inline-block bg-emerald-900/50 rounded-xl px-3 py-1 mb-2">
                     <span className="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest">Inicio</span>
                   </div>
-                  <p 
-                    className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-500"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
+                  <p
+                      className="text-2xl sm:text-4xl md:text-5xl font-black text-zinc-500"
+                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
                   >
                     --:--
                   </p>
                 </div>
-                
+
                 {/* Duration - Center */}
                 <div className="flex flex-col items-center">
-                  <div className="inline-block bg-orange-500/20 rounded-xl px-3 py-1 mb-2">
+                  <div className="inline-block bg-orange-900/50 rounded-xl px-3 py-1 mb-2">
                     <span className="text-xs sm:text-sm font-bold text-orange-400 uppercase tracking-widest">Duración</span>
                   </div>
-                  <span className={`text-2xl sm:text-4xl md:text-5xl font-black drop-shadow-[0_0_10px_rgba(251,146,60,0.5)] ${manualEndTime ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'text-orange-400'}`}>
-                    {manualEndTime 
-                      ? Math.max(0, Math.round((manualEndTime.getTime() - new Date().getTime()) / 60000))
-                      : totalDuration}
+                  <span className={`text-2xl sm:text-4xl md:text-5xl font-black ${manualEndTime ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.5)]'}`}>
+        {manualEndTime
+            ? Math.max(0, Math.round((manualEndTime.getTime() - new Date().getTime()) / 60000))
+            : totalDuration}
                     <span className="text-lg sm:text-2xl ml-1">min</span>
-                  </span>
+      </span>
                 </div>
-                
+
                 {/* End Time - Editable - Bright Yellow/Amber */}
                 <div className="text-center">
-                  <div className="inline-flex items-center gap-2 bg-yellow-500/20 rounded-xl px-3 py-1 mb-2">
-                    <span className="text-xs sm:text-sm font-bold text-yellow-400 uppercase tracking-widest">
-                      Fin {manualEndTime && <span className="text-[10px] opacity-70">(manual)</span>}
-                    </span>
+                  <div className="inline-flex items-center gap-2 bg-yellow-900/50 rounded-xl px-3 py-1 mb-2">
+            <span className="text-xs sm:text-sm font-bold text-yellow-400 uppercase tracking-widest">
+              Fin {manualEndTime && <span className="text-[10px] opacity-70">(manual)</span>}
+            </span>
                     {!isEditingInitialEndTime && (
-                      <button
-                        onClick={() => {
-                          const timeToEdit = manualEndTime || new Date(Date.now() + totalDuration * 60 * 1000);
-                          setInitialEditHours(timeToEdit.getHours().toString().padStart(2, '0'));
-                          setInitialEditMinutes(timeToEdit.getMinutes().toString().padStart(2, '0'));
-                          setIsEditingInitialEndTime(true);
-                        }}
-                        className="p-1.5 rounded-lg bg-yellow-500/30 hover:bg-yellow-500/50 transition-all hover:scale-110"
-                        title="Editar hora de fin"
-                      >
-                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-300" />
-                      </button>
+                        <button
+                            onClick={() => {
+                              const timeToEdit = manualEndTime || new Date(Date.now() + totalDuration * 60 * 1000);
+                              setInitialEditHours(timeToEdit.getHours().toString().padStart(2, '0'));
+                              setInitialEditMinutes(timeToEdit.getMinutes().toString().padStart(2, '0'));
+                              setIsEditingInitialEndTime(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 transition-all hover:scale-110"
+                            title="Editar hora de fin"
+                        >
+                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-300" />
+                        </button>
                     )}
                   </div>
-                  
+
                   {isEditingInitialEndTime ? (
-                    <div className="flex flex-col items-center gap-3">
-                      {/* Time inputs row */}
-                      <div className="flex items-center justify-center gap-2">
-                        <input
-                          type="text"
-                          value={initialEditHours}
-                          onChange={(e) => setInitialEditHours(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                          className="w-14 sm:w-20 h-12 sm:h-16 text-center bg-slate-700/80 border-2 border-yellow-500/50 rounded-xl text-yellow-300 text-2xl sm:text-4xl font-black focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
-                          placeholder="HH"
-                          maxLength={2}
-                          autoFocus
-                        />
-                        <span className="text-yellow-400 text-3xl sm:text-4xl font-black animate-pulse">:</span>
-                        <input
-                          type="text"
-                          value={initialEditMinutes}
-                          onChange={(e) => setInitialEditMinutes(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                          className="w-14 sm:w-20 h-12 sm:h-16 text-center bg-slate-700/80 border-2 border-yellow-500/50 rounded-xl text-yellow-300 text-2xl sm:text-4xl font-black focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
-                          placeholder="MM"
-                          maxLength={2}
-                        />
+                      <div className="flex flex-col items-center gap-3">
+                        {/* Time inputs row */}
+                        <div className="flex items-center justify-center gap-2">
+                          <input
+                              type="text"
+                              value={initialEditHours}
+                              onChange={(e) => setInitialEditHours(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                              className="w-14 sm:w-20 h-12 sm:h-16 text-center bg-zinc-700 border-2 border-yellow-500/50 rounded-xl text-yellow-300 text-2xl sm:text-4xl font-black focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                              placeholder="HH"
+                              maxLength={2}
+                              autoFocus
+                          />
+                          <span className="text-yellow-400 text-3xl sm:text-4xl font-black animate-pulse">:</span>
+                          <input
+                              type="text"
+                              value={initialEditMinutes}
+                              onChange={(e) => setInitialEditMinutes(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                              className="w-14 sm:w-20 h-12 sm:h-16 text-center bg-zinc-700 border-2 border-yellow-500/50 rounded-xl text-yellow-300 text-2xl sm:text-4xl font-black focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
+                              placeholder="MM"
+                              maxLength={2}
+                          />
+                        </div>
+                        {/* Action buttons row */}
+                        <div className="flex items-center gap-3">
+                          <button
+                              onClick={() => {
+                                const hours = parseInt(initialEditHours) || 0;
+                                const minutes = parseInt(initialEditMinutes) || 0;
+                                if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                                  const newEndTime = new Date();
+                                  newEndTime.setHours(hours, minutes, 0, 0);
+                                  setManualEndTime(newEndTime);
+                                  setIsEditingInitialEndTime(false);
+                                }
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105"
+                              title="Guardar"
+                          >
+                            <Check className="w-5 h-5 text-white" />
+                            <span className="text-white font-bold text-sm hidden sm:inline">Guardar</span>
+                          </button>
+                          <button
+                              onClick={() => setIsEditingInitialEndTime(false)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-600 hover:bg-slate-500 transition-all hover:scale-105"
+                              title="Cancelar"
+                          >
+                            <X className="w-5 h-5 text-white" />
+                            <span className="text-white font-bold text-sm hidden sm:inline">Cancelar</span>
+                          </button>
+                        </div>
                       </div>
-                      {/* Action buttons row */}
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => {
-                            const hours = parseInt(initialEditHours) || 0;
-                            const minutes = parseInt(initialEditMinutes) || 0;
-                            if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                              const newEndTime = new Date();
-                              newEndTime.setHours(hours, minutes, 0, 0);
-                              setManualEndTime(newEndTime);
-                              setIsEditingInitialEndTime(false);
-                            }
-                          }}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105"
-                          title="Guardar"
-                        >
-                          <Check className="w-5 h-5 text-white" />
-                          <span className="text-white font-bold text-sm hidden sm:inline">Guardar</span>
-                        </button>
-                        <button
-                          onClick={() => setIsEditingInitialEndTime(false)}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-600 hover:bg-slate-500 transition-all hover:scale-105"
-                          title="Cancelar"
-                        >
-                          <X className="w-5 h-5 text-white" />
-                          <span className="text-white font-bold text-sm hidden sm:inline">Cancelar</span>
-                        </button>
-                      </div>
-                    </div>
                   ) : (
-                    <p 
-                      className="text-2xl sm:text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] cursor-pointer hover:text-yellow-300 transition-colors"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
-                      onClick={() => {
-                        const timeToEdit = manualEndTime || new Date(Date.now() + totalDuration * 60 * 1000);
-                        setInitialEditHours(timeToEdit.getHours().toString().padStart(2, '0'));
-                        setInitialEditMinutes(timeToEdit.getMinutes().toString().padStart(2, '0'));
-                        setIsEditingInitialEndTime(true);
-                      }}
-                      title="Clic para editar"
-                    >
-                      {manualEndTime 
-                        ? manualEndTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })
-                        : new Date(Date.now() + totalDuration * 60 * 1000).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })
-                      }
-                    </p>
+                      <p
+                          className="text-2xl sm:text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] cursor-pointer hover:text-yellow-300 transition-colors"
+                          style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
+                          onClick={() => {
+                            const timeToEdit = manualEndTime || new Date(Date.now() + totalDuration * 60 * 1000);
+                            setInitialEditHours(timeToEdit.getHours().toString().padStart(2, '0'));
+                            setInitialEditMinutes(timeToEdit.getMinutes().toString().padStart(2, '0'));
+                            setIsEditingInitialEndTime(true);
+                          }}
+                          title="Clic para editar"
+                      >
+                        {manualEndTime
+                            ? manualEndTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })
+                            : new Date(Date.now() + totalDuration * 60 * 1000).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })
+                        }
+                      </p>
                   )}
                 </div>
               </div>
-              
+
               {/* Footer info */}
-              <div className="text-center mt-4 sm:mt-6 pt-4 border-t border-slate-700/50">
+              <div className="text-center mt-4 sm:mt-6 pt-4 border-t border-zinc-600">
                 {manualEndTime ? (
-                  <button
-                    onClick={() => setManualEndTime(null)}
-                    className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Restaurar hora automática
-                  </button>
+                    <button
+                        onClick={() => setManualEndTime(null)}
+                        className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Restaurar hora automática
+                    </button>
                 ) : (
-                  <p className="text-slate-400 text-sm">
-                    Hora actual + <span className="text-orange-400 font-bold">{totalDuration} min</span> = Hora de fin
-                  </p>
+                    <p className="text-zinc-400 text-sm">
+                      Hora actual + <span className="text-orange-400 font-bold">{totalDuration} min</span> = Hora de fin
+                    </p>
                 )}
               </div>
             </div>
+
+
+
 
             <SettingsPanel
               readingSpeed={readingSpeed}
@@ -1441,12 +1444,6 @@ export default function HomePage() {
                   totalDuration={totalDuration}
                   manualEndTime={manualEndTime}
                   onManualEndTimeChange={setManualEndTime}
-                />
-
-                <CountdownTimer
-                  remainingTime={remainingTime}
-                  adjustedTimes={adjustedFinalTimes}
-                  isTimerRunning={isTimerRunning}
                 />
 
                 <DurationAdjuster
