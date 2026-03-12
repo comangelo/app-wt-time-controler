@@ -23,7 +23,11 @@ import {
   Palette,
   Eye,
   EyeOff,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Bell,
+  Volume2,
+  VolumeX,
+  Vibrate
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import PresentationMode from "@/components/PresentationMode";
 
 // Import refactored components
@@ -45,7 +50,6 @@ import { AnalysisSummary } from "@/components/AnalysisSummary";
 import { TimerDisplay } from "@/components/TimerDisplay";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { QuickStats } from "@/components/QuickStats";
-import { NotificationSettings } from "@/components/NotificationSettings";
 import { ParagraphCard } from "@/components/ParagraphCard";
 import { FinalQuestionsSection } from "@/components/FinalQuestionsSection";
 import { ParagraphStatsPanel } from "@/components/ParagraphStatsPanel";
@@ -136,18 +140,13 @@ export default function HomePage() {
   const timerRef = useRef(null);
   const fileInputRef = useRef(null);
   const exportRef = useRef(null);
-  
   // Notification state
   const [notificationPlayed, setNotificationPlayed] = useState({
-    fiveMin: false,
-    oneMin: false,
     now: false
   });
-  
   // Settings with localStorage persistence
   const [soundEnabled, setSoundEnabled] = useLocalStorage('pdfTimer_soundEnabled', true);
   const [vibrationEnabled, setVibrationEnabled] = useLocalStorage('pdfTimer_vibrationEnabled', true);
-  const [alertTimes, setAlertTimes] = useLocalStorage('pdfTimer_alertTimes', { firstAlert: 0, secondAlert: 0 });
   const [presentationTheme, setPresentationTheme] = useLocalStorageString('pdfTimer_presentationTheme', 'dark');
   const [overtimeAlertEnabled, setOvertimeAlertEnabled] = useLocalStorage('pdfTimer_overtimeAlert', true);
   const [darkMode, setDarkMode] = useLocalStorage('pdfTimer_darkMode', false);
@@ -243,7 +242,7 @@ export default function HomePage() {
           [index]: (prev.paragraphs[index] || 0) + 1,
         }
       }));
-      toast.success(`Comentario añadido al párrafo ${index + 1}`);
+      // toast.success(`Comentario añadido al párrafo ${index + 1}`);
     } else if (presentationPhase === 'review') {
       setCommentStats(prev => ({
         ...prev,
@@ -252,7 +251,7 @@ export default function HomePage() {
           [index]: (prev.review[index] || 0) + 1,
         }
       }));
-      toast.success(`Comentario añadido a la pregunta de repaso ${index + 1}`);
+      // toast.success(`Comentario añadido a la pregunta de repaso ${index + 1}`);
     }
   }, [presentationPhase]);
 
@@ -407,7 +406,7 @@ export default function HomePage() {
     const nextIndex = currentManualParagraph + 1;
     setCurrentManualParagraph(nextIndex);
     setParagraphStartTime(Date.now()); // Start timing the next paragraph
-    toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
+    // toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
   }, [currentManualParagraph, analysisResult, paragraphStartTime]);
 
   const goToPreviousParagraph = useCallback(() => {
@@ -444,41 +443,17 @@ export default function HomePage() {
   // Check for notification triggers
   useEffect(() => {
     if (!isTimerRunning || !analysisResult) return;
-    
     const finalQuestionsSeconds = getFinalQuestionsTimeSeconds();
     if (finalQuestionsSeconds <= 0) return;
-    
     const timeUntilFinalQuestions = finalQuestionsSeconds - elapsedTime;
-    
-    // First alert - only if value > 0
-    if (alertTimes.firstAlert > 0) {
-      const firstAlertSeconds = alertTimes.firstAlert * 60;
-      if (timeUntilFinalQuestions <= firstAlertSeconds && timeUntilFinalQuestions > firstAlertSeconds - 5 && !notificationPlayed.fiveMin) {
-        playNotificationSound('warning');
-        triggerVibration([200, 100, 200]);
-        setNotificationPlayed(prev => ({ ...prev, fiveMin: true }));
-        toast.warning(`⏰ ${alertTimes.firstAlert} minuto${alertTimes.firstAlert > 1 ? 's' : ''} para las preguntas de repaso`, { duration: 5000 });
-      }
-    }
-    
-    // Second alert - only if value > 0
-    if (alertTimes.secondAlert > 0) {
-      const secondAlertSeconds = alertTimes.secondAlert * 60;
-      if (timeUntilFinalQuestions <= secondAlertSeconds && timeUntilFinalQuestions > secondAlertSeconds - 5 && !notificationPlayed.oneMin) {
-        playNotificationSound('urgent');
-        triggerVibration([200, 100, 200, 100, 200]);
-        setNotificationPlayed(prev => ({ ...prev, oneMin: true }));
-        toast.warning(`⚠️ ${alertTimes.secondAlert} minuto${alertTimes.secondAlert > 1 ? 's' : ''} para las preguntas de repaso`, { duration: 5000 });
-      }
-    }
-    
+
     if (timeUntilFinalQuestions <= 0 && timeUntilFinalQuestions > -5 && !notificationPlayed.now) {
       playNotificationSound('final');
       triggerVibration([500, 200, 500, 200, 500]);
       setNotificationPlayed(prev => ({ ...prev, now: true }));
       toast.success("🎯 ¡Es hora de las preguntas de repaso!", { duration: 8000 });
     }
-  }, [elapsedTime, isTimerRunning, analysisResult, notificationPlayed, playNotificationSound, getFinalQuestionsTimeSeconds, alertTimes, triggerVibration]);
+  }, [elapsedTime, isTimerRunning, analysisResult, notificationPlayed, playNotificationSound, getFinalQuestionsTimeSeconds, triggerVibration]);
 
   // Initialize remaining time when analysis is complete or duration changes
   useEffect(() => {
@@ -610,8 +585,7 @@ export default function HomePage() {
     setRemainingTime(totalDurationSeconds);
     setStartTime(null);
     setEndTime(null);
-    // Don't reset manualEndTime so user keeps their preference
-    setNotificationPlayed({ fiveMin: false, oneMin: false, now: false });
+    setNotificationPlayed({ now: false });
     setCurrentManualParagraph(0);
     setLowTimeAlertShown(false);
     setParagraphStats({});
@@ -675,7 +649,7 @@ export default function HomePage() {
     setCurrentManualParagraph(0);
     setParagraphStartTime(Date.now());
     setPresentationPhase('paragraphs'); // Sync presentation phase
-    toast.success("Pasando al Párrafo 1");
+    // toast.success("Pasando al Párrafo 1");
   }, [introductionStartTime, getScaledIntroductionTime]);
 
   // Start review questions mode
@@ -697,7 +671,7 @@ export default function HomePage() {
       setCurrentReviewQuestion(nextQuestion);
       setReviewQuestionStartTime(Date.now());
       setPresentationReviewQuestion(nextQuestion); // Sync presentation review question
-      toast.success(`Pregunta de repaso ${nextQuestion + 1}`);
+      // toast.success(`Pregunta de repaso ${nextQuestion + 1}`);
     }
   }, [currentReviewQuestion, analysisResult]);
 
@@ -758,7 +732,7 @@ export default function HomePage() {
     setEndTime(addSecondsToDate(virtualStartTime, totalDurationSeconds));
     setCurrentManualParagraph(paragraphIndex);
     setIsTimerRunning(true);
-    setNotificationPlayed({ fiveMin: false, oneMin: false, now: false });
+    setNotificationPlayed({ now: false });
     setParagraphStartTime(Date.now()); // Start timing this paragraph
     
     toast.success(`Iniciando desde Párrafo ${paragraphIndex + 1}`);
@@ -830,22 +804,22 @@ export default function HomePage() {
                 <p className={`text-xs font-semibold tracking-wide hidden sm:block ${darkMode ? currentTheme?.textMuted || 'text-zinc-400' : 'text-slate-700'}`}>Calculadora de Tiempo</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className={`flex items-center gap-1 sm:gap-2 p-1 rounded-full ${darkMode ? 'bg-zinc-900/50' : 'bg-slate-100/50'}`}>
               {/* Dark Mode Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`rounded-full w-9 h-9 sm:w-10 sm:h-10 ${
+                    className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 transition-colors ${
                       darkMode 
-                        ? 'text-yellow-400 hover:bg-zinc-700' 
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'text-yellow-400 hover:bg-zinc-700 hover:text-yellow-300' 
+                        : 'text-slate-600 hover:bg-slate-200'
                     }`}
                     title={darkMode ? 'Opciones de modo oscuro' : 'Activar modo oscuro'}
                     data-testid="dark-mode-toggle"
                   >
-                    {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    {darkMode ? <Sun className="w-5 h-5 sm:w-6 sm:h-6" /> : <Moon className="w-5 h-5 sm:w-6 sm:h-6" />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className={`rounded-xl min-w-[200px] ${darkMode ? 'bg-zinc-800 border-zinc-700' : ''}`}>
@@ -897,34 +871,86 @@ export default function HomePage() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Notifications Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 transition-colors ${
+                      darkMode
+                        ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                        : 'text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="Configurar notificaciones"
+                  >
+                    <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className={`rounded-xl min-w-[240px] ${darkMode ? 'bg-zinc-800 border-zinc-700' : ''}`}>
+                  <DropdownMenuLabel className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+                    Notificaciones
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className={darkMode ? 'bg-zinc-700' : ''} />
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={`cursor-pointer ${darkMode ? 'hover:bg-zinc-700 focus:bg-zinc-700' : ''}`}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        {soundEnabled ? <Volume2 className="w-4 h-4 text-green-500" /> : <VolumeX className={`w-4 h-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-400'}`} />}
+                        <span className={`text-sm ${darkMode ? 'text-zinc-200' : ''}`}>Sonido</span>
+                      </div>
+                      <Switch checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={`cursor-pointer ${darkMode ? 'hover:bg-zinc-700 focus:bg-zinc-700' : ''}`}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <Vibrate className={`w-4 h-4 ${vibrationEnabled ? 'text-green-500' : darkMode ? 'text-zinc-400' : 'text-zinc-400'}`} />
+                        <span className={`text-sm ${darkMode ? 'text-zinc-200' : ''}`}>Vibración</span>
+                      </div>
+                      <Switch checked={vibrationEnabled} onCheckedChange={setVibrationEnabled} />
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className={darkMode ? 'bg-zinc-700' : ''} />
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={`cursor-pointer ${darkMode ? 'hover:bg-zinc-700 focus:bg-zinc-700' : ''}`}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <Timer className={`w-4 h-4 ${overtimeAlertEnabled ? 'text-orange-500' : darkMode ? 'text-zinc-400' : 'text-zinc-400'}`} />
+                        <span className={`text-sm ${darkMode ? 'text-zinc-200' : ''}`}>Alerta de exceso</span>
+                      </div>
+                      <Switch checked={overtimeAlertEnabled} onCheckedChange={setOvertimeAlertEnabled} />
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               {analysisResult && (
                 <>
                 <Button 
                   variant="outline" 
                   onClick={enterPresentationMode} 
-                  className={`rounded-full px-2 sm:px-5 py-1.5 sm:py-2 border-2 font-medium transition-all text-xs sm:text-sm ${
+                  className={`rounded-full h-10 sm:h-11 px-3 sm:px-5 border-2 font-semibold transition-all text-xs sm:text-sm ${
                     darkMode
-                      ? 'border-zinc-500 text-zinc-100 hover:border-orange-400 hover:text-orange-400 hover:bg-orange-500/10'
-                      : 'border-slate-300 text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50'
+                      ? 'border-zinc-600 bg-zinc-700 text-zinc-100 hover:border-orange-400 hover:text-orange-400 hover:bg-orange-500/10'
+                      : 'border-slate-200 bg-slate-100 text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50'
                   }`}
                   data-testid="presentation-mode-btn"
                 >
-                  <Maximize className="w-4 h-4 sm:mr-2" />
+                  <Maximize className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                   <span className="hidden sm:inline">Presentación</span>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className={`rounded-full px-2 sm:px-5 py-1.5 sm:py-2 border-2 font-medium text-xs sm:text-sm ${
+                      className={`rounded-full h-10 sm:h-11 px-3 sm:px-5 border-2 font-semibold text-xs sm:text-sm ${
                         darkMode
-                          ? 'border-zinc-500 text-zinc-100 hover:border-zinc-400 hover:bg-zinc-700'
-                          : 'border-slate-300 text-slate-700 hover:border-slate-400'
+                          ? 'border-zinc-600 bg-zinc-700 text-zinc-100 hover:border-zinc-400'
+                          : 'border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-400'
                       }`}
                       data-testid="export-btn"
                     >
-                      <Download className="w-4 h-4 sm:mr-2" />
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                       <span className="hidden sm:inline">Exportar</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -942,14 +968,14 @@ export default function HomePage() {
                 <Button 
                   variant="ghost" 
                   onClick={resetAll} 
-                  className={`rounded-full px-2 sm:px-4 py-1.5 sm:py-2 font-medium text-xs sm:text-sm ${
+                  className={`rounded-full h-10 sm:h-11 px-3 sm:px-4 font-semibold text-xs sm:text-sm ${
                     darkMode
-                      ? 'text-zinc-200 hover:text-zinc-50 hover:bg-zinc-700'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                      ? 'bg-red-900/80 text-red-300 hover:bg-red-800 hover:text-red-200'
+                      : 'bg-red-100 text-red-700 hover:bg-red-200'
                   }`}
                   data-testid="new-analysis-btn"
                 >
-                  <RotateCcw className="w-4 h-4 sm:mr-2" />
+                  <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
                   <span className="hidden sm:inline">Nuevo</span>
                 </Button>
                 </>
@@ -1376,7 +1402,7 @@ export default function HomePage() {
                                 }
                               }));
                             }
-                            toast.success(`Avanzando al Párrafo ${analysisResult.paragraphs[lastIndex + 1].number}`);
+                            // toast.success(`Avanzando al Párrafo ${analysisResult.paragraphs[lastIndex + 1].number}`);
                           }
                         }}
                         isLastParagraph={lastIndex === analysisResult.paragraphs.length - 1}
@@ -1458,18 +1484,6 @@ export default function HomePage() {
                   analysisResult={analysisResult}
                   currentManualParagraph={currentManualParagraph}
                   readingSpeed={readingSpeed}
-                  darkMode={darkMode}
-                />
-
-                <NotificationSettings
-                  soundEnabled={setSoundEnabled}
-                  vibrationEnabled={setVibrationEnabled}
-                  alertTimes={alertTimes}
-                  setAlertTimes={setAlertTimes}
-                  onTestSound={() => playNotificationSound('warning')}
-                  onTestVibration={() => triggerVibration([200, 100, 200])}
-                  overtimeAlertEnabled={overtimeAlertEnabled}
-                  setOvertimeAlertEnabled={setOvertimeAlertEnabled}
                   darkMode={darkMode}
                 />
 
