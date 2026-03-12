@@ -77,37 +77,42 @@ const API = `${BACKEND_URL}/api`;
 const augmentAnalysisResultWithHighlights = (result, timePerHighlight) => {
   if (!result || !result.paragraphs) return result;
 
-  const augmentedResult = { ...result };
+  const augmentedResult = JSON.parse(JSON.stringify(result)); // Deep copy to avoid direct mutation
   let totalAddedTime = 0;
   let totalHighlights = 0;
 
-  augmentedResult.paragraphs = augmentedResult.paragraphs.map(p => {
-    let highlightsInParagraph = 0;
-    const newQuestions = p.questions.map(q => {
-      // Use regex to find and extract content within quotes
-      const match = q.parenthesis_content?.match(/"(.*?)"/);
-      if (match && match[1]) {
-        highlightsInParagraph++;
-        const newContentType = q.content_type ? `${q.content_type}_highlight` : 'highlight';
-        // Add the extracted text to the question object
-        return { ...q, content_type: newContentType, highlight_content: match[1] };
+  augmentedResult.paragraphs.forEach((p) => {
+    let paragraphTimeIncrease = 0;
+    p.questions.forEach((q) => {
+      if (q.parenthesis_content?.includes('"') || q.parenthesis_content?.includes('“')) {
+        // Use a global regex to find all matches, including smart quotes
+        const matches = [...q.parenthesis_content.matchAll(/"(.*?)"|“(.*?)”/g)];
+
+        if (matches.length > 0) {
+          const highlightsInQuestion = matches.length;
+          paragraphTimeIncrease += highlightsInQuestion * timePerHighlight;
+          totalHighlights += highlightsInQuestion;
+
+          q.content_type = q.content_type ? `${q.content_type}_highlight` : 'highlight';
+          // Store all extracted texts in a new array property
+          // A match will have the text in either group 1 (straight quotes) or group 2 (smart quotes)
+          q.highlight_contents = matches.map((match) => match[1] || match[2]);
+        }
       }
-      return q;
     });
 
-    if (highlightsInParagraph > 0) {
-      const addedTime = highlightsInParagraph * timePerHighlight;
-      totalAddedTime += addedTime;
-      totalHighlights += highlightsInParagraph;
-      return { ...p, questions: newQuestions, total_time_seconds: p.total_time_seconds + addedTime };
+    if (paragraphTimeIncrease > 0) {
+      p.total_time_seconds += paragraphTimeIncrease;
+      totalAddedTime += paragraphTimeIncrease;
     }
-    return p;
   });
 
   if (totalAddedTime > 0) {
     augmentedResult.total_time_seconds += totalAddedTime;
     toast.info(`${totalHighlights} "Ideas importantes" encontradas. Se añadieron ${totalAddedTime}s al tiempo total.`);
   }
+
+  augmentedResult.total_highlights = totalHighlights;
 
   return augmentedResult;
 };
