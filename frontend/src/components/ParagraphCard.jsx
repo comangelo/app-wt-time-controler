@@ -62,11 +62,11 @@ export function ParagraphCard({
   const hasScriptureContent = allQuestions.some(q => q.content_type === 'scripture' || q.content_type === 'both');
   const hasNoteContent = allQuestions.some(q => q.content_type === 'note');
 
-  // New: Extract unique "important idea" texts for dynamic badges
-  const highlightContents = useMemo(() => {
+  // Extract unique "important idea" texts for dynamic badges
+  const uniqueHighlightContents = useMemo(() => {
     const highlights = allQuestions
-      .filter(q => q.highlight_content)
-      .map(q => q.highlight_content);
+      .filter(q => q.highlight_contents && q.highlight_contents.length > 0)
+      .flatMap(q => q.highlight_contents);
     // Return unique values
     return [...new Set(highlights)];
   }, [allQuestions]);
@@ -267,7 +267,7 @@ export function ParagraphCard({
                   Nota de estudio
                 </span>
               )}
-              {highlightContents.map((highlightText, idx) => (
+              {uniqueHighlightContents.map((highlightText, idx) => (
                 <span key={idx} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                   darkMode
                     ? 'bg-cyan-900/70 text-cyan-200 border border-cyan-700'
@@ -569,18 +569,15 @@ export function ParagraphCard({
                               {hasExtraContent && (
                                 <span className={`ml-1 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
                                   (
-                                    {q.content_type?.includes('highlight') ? (
-                                      q.parenthesis_content.split(/"(.*?)"/).map((part, i) =>
-                                        i % 2 === 1 ? (
-                                          <span key={i} className={`font-semibold ${darkMode ? 'text-cyan-300' : 'text-cyan-600'}`}>
-                                            "{part}"
-                                          </span>
-                                        ) : (
-                                          <span key={i}>{part}</span>
-                                        )
+                                    {/* Split by the quoted content to highlight it */}
+                                    {q.parenthesis_content.split(/(["“][^"”]+["”])/g).map((part, i) =>
+                                      (part.startsWith('"') && part.endsWith('"')) || (part.startsWith('“') && part.endsWith('”')) ? (
+                                        <span key={i} className={`font-semibold ${darkMode ? 'text-cyan-300' : 'text-cyan-600'}`}>
+                                          {part}
+                                        </span>
+                                      ) : (
+                                        <span key={i}>{part}</span>
                                       )
-                                    ) : (
-                                      q.parenthesis_content
                                     )}
                                   )
                                 </span>

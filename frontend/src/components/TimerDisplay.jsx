@@ -83,13 +83,13 @@ export function TimerDisplay({
   return (
     <div className="space-y-2 sm:space-y-4">
       {/* Start/End Time Display - Always Visible, Responsive */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl border border-slate-700/50" data-testid="time-schedule-card">
+      <div className="bg-gradient-to-br from-zinc-800 to-zinc-700 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl border border-zinc-600" data-testid="time-schedule-card">
         
         {/* Current Time Clock - Always visible */}
         <div className="flex justify-center mb-3">
-          <div className="inline-flex items-center gap-2 bg-slate-700/50 rounded-full px-4 py-1.5 border border-slate-600/50">
-            <Clock className="w-4 h-4 text-slate-400" />
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">Hora actual</span>
+          <div className="inline-flex items-center gap-2 bg-zinc-700/50 rounded-full px-4 py-1.5 border border-zinc-600">
+            <Clock className="w-4 h-4 text-zinc-400" />
+            <span className="text-xs text-zinc-400 uppercase tracking-wider font-medium">Hora actual</span>
             <span 
               className="text-lg font-bold text-white"
               style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
@@ -105,11 +105,11 @@ export function TimerDisplay({
           
           {/* Start Time - Green (empty until started) */}
           <div className="text-center">
-            <div className="inline-block bg-emerald-500/20 rounded-lg px-2 py-0.5 mb-1">
+            <div className="inline-block bg-emerald-900/50 rounded-lg px-2 py-0.5 mb-1">
               <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Inicio</span>
             </div>
             <p 
-              className={`text-base sm:text-xl md:text-2xl font-black ${startTime ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-slate-500'}`}
+              className={`text-base sm:text-xl md:text-2xl font-black ${startTime ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'text-zinc-500'}`}
               style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}
               data-testid="start-time-display"
             >
@@ -119,7 +119,7 @@ export function TimerDisplay({
           
           {/* Duration - Orange */}
           <div className="text-center">
-            <div className="inline-block bg-orange-500/20 rounded-lg px-2 py-0.5 mb-1">
+            <div className="inline-block bg-orange-900/50 rounded-lg px-2 py-0.5 mb-1">
               <span className="text-[9px] sm:text-[10px] font-bold text-orange-400 uppercase tracking-wider">Duración</span>
             </div>
             <p className={`text-base sm:text-xl md:text-2xl font-black ${manualEndTime && !startTime ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' : 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]'}`}>
@@ -129,14 +129,14 @@ export function TimerDisplay({
           
           {/* End Time - Yellow - Editable */}
           <div className="text-center">
-            <div className="inline-flex items-center gap-1 bg-yellow-500/20 rounded-lg px-2 py-0.5 mb-1">
+            <div className="inline-flex items-center gap-1 bg-yellow-900/50 rounded-lg px-2 py-0.5 mb-1">
               <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isOvertime ? 'text-rose-400' : isLowTime ? 'text-rose-400' : 'text-yellow-400'}`}>
                 Fin
               </span>
               {!startTime && !isEditingEndTime && (
                 <button
                   onClick={startEditingEndTime}
-                  className="p-0.5 rounded hover:bg-yellow-500/30 transition-colors"
+                  className="p-0.5 rounded hover:bg-yellow-500/20 transition-colors"
                   title="Editar hora de fin"
                   data-testid="edit-end-time-btn"
                 >
@@ -153,7 +153,7 @@ export function TimerDisplay({
                     type="text"
                     value={editHours}
                     onChange={(e) => setEditHours(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    className="w-10 sm:w-12 h-8 sm:h-10 text-center bg-slate-700/80 border-2 border-yellow-500/50 rounded-lg text-yellow-300 text-base sm:text-xl font-black focus:border-yellow-400 focus:outline-none"
+                    className="w-10 sm:w-12 h-8 sm:h-10 text-center bg-zinc-700 border-2 border-yellow-500/50 rounded-lg text-yellow-300 text-base sm:text-xl font-black focus:border-yellow-400 focus:outline-none"
                     placeholder="HH"
                     maxLength={2}
                     autoFocus
@@ -164,7 +164,7 @@ export function TimerDisplay({
                     type="text"
                     value={editMinutes}
                     onChange={(e) => setEditMinutes(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    className="w-10 sm:w-12 h-8 sm:h-10 text-center bg-slate-700/80 border-2 border-yellow-500/50 rounded-lg text-yellow-300 text-base sm:text-xl font-black focus:border-yellow-400 focus:outline-none"
+                    className="w-10 sm:w-12 h-8 sm:h-10 text-center bg-zinc-700 border-2 border-yellow-500/50 rounded-lg text-yellow-300 text-base sm:text-xl font-black focus:border-yellow-400 focus:outline-none"
                     placeholder="MM"
                     maxLength={2}
                     data-testid="edit-minutes-input"
@@ -211,7 +211,7 @@ export function TimerDisplay({
         
         {/* Footer info */}
         {!startTime && (
-          <div className="text-center mt-2 pt-2 border-t border-slate-700/50">
+          <div className="text-center mt-2 pt-2 border-t border-zinc-600">
             {manualEndTime ? (
               <button
                 onClick={clearManualEndTime}
@@ -221,7 +221,7 @@ export function TimerDisplay({
                 ↺ Restaurar hora automática
               </button>
             ) : (
-              <p className="text-slate-500 text-[10px] sm:text-xs">
+              <p className="text-zinc-400 text-[10px] sm:text-xs">
                 Hora actual + <span className="text-orange-400 font-bold">{totalDuration} min</span>
               </p>
             )}
@@ -230,41 +230,41 @@ export function TimerDisplay({
       </div>
 
       {/* Main Timer Card */}
-      <Card className="border border-slate-200 shadow-sm rounded-xl sm:rounded-2xl overflow-hidden" data-testid="main-timer-card">
-        <CardHeader className="bg-slate-800 pb-2 sm:pb-3 pt-2 sm:pt-4">
-          <CardTitle className="text-xs sm:text-sm text-slate-300 text-center font-medium">
-            Cronómetro de Lectura
+      <Card className="border-4 border-orange-500 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden" data-testid="main-timer-card">
+        <CardHeader className="bg-orange-100 pb-3 sm:pb-4 pt-3 sm:pt-5">
+          <CardTitle className="text-2xl sm:text-3xl text-orange-500 text-center font-black tracking-wider uppercase font-heading">
+            Cronómetro General
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 sm:p-6 text-center bg-white">
           {/* Main Timer */}
           <div className="py-2 sm:py-4">
             <p 
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-slate-800 tracking-tight" 
+              className="text-6xl sm:text-7xl md:text-8xl font-normal text-slate-800 tracking-tighter" 
               style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
               data-testid="elapsed-time"
             >
               {formatTime(elapsedTime)}
             </p>
-            <p className="text-slate-400 mt-1 sm:mt-3 text-xs sm:text-sm">Tiempo Transcurrido</p>
+            <p className="text-slate-500 mt-1 sm:mt-3 text-sm font-medium uppercase tracking-wider">Tiempo Transcurrido</p>
           </div>
 
           {/* Remaining Time */}
           <div className="pb-2 sm:pb-4">
             <p
-              className={`text-2xl sm:text-3xl font-light tracking-tight ${isOvertime ? 'text-red-500 animate-pulse' : 'text-slate-600'}`}
+              className={`text-6xl sm:text-7xl md:text-8xl font-normal tracking-tighter ${isOvertime ? 'text-red-500 animate-pulse' : 'text-orange-500'}`}
               style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
               data-testid="remaining-time"
             >
               {isOvertime ? `-${formatTime(Math.abs(remainingTime))}` : formatTime(remainingTime)}
             </p>
-            <p className="text-slate-400 mt-1 text-xs sm:text-sm">Tiempo restante de {displayDuration} minutos</p>
+            <p className="text-slate-500 mt-1 text-sm font-medium uppercase tracking-wider">Restante de {displayDuration} min</p>
           </div>
           
-          {/* Progress Bar */}y
-          <div className="mt-2 sm:mt-4 mb-3 sm:mb-6">
-            <Progress value={progressPercentage} className="h-1.5 sm:h-2 rounded-full" />
-            <p className="text-[10px] sm:text-xs text-slate-400 mt-1 sm:mt-2">{Math.round(progressPercentage)}%</p>
+          {/* Progress Bar */}
+          <div className="mt-4 sm:mt-6 mb-4 sm:mb-8 px-4 sm:px-0">
+            <Progress value={progressPercentage} className="h-3 sm:h-4 rounded-full bg-orange-100 [&>div]:bg-orange-500" />
+            <p className="text-sm sm:text-base text-slate-500 mt-2 font-bold">{Math.round(progressPercentage)}%</p>
           </div>
 
           {/* Timer Controls */}
