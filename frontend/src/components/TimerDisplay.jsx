@@ -246,10 +246,22 @@ export function TimerDisplay({
             >
               {formatTime(elapsedTime)}
             </p>
-            <p className="text-slate-400 mt-1 sm:mt-3 text-xs sm:text-sm">Transcurrido</p>
+            <p className="text-slate-400 mt-1 sm:mt-3 text-xs sm:text-sm">Tiempo Transcurrido</p>
+          </div>
+
+          {/* Remaining Time */}
+          <div className="pb-2 sm:pb-4">
+            <p
+              className={`text-2xl sm:text-3xl font-light tracking-tight ${isOvertime ? 'text-red-500 animate-pulse' : 'text-slate-600'}`}
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              data-testid="remaining-time"
+            >
+              {isOvertime ? `-${formatTime(Math.abs(remainingTime))}` : formatTime(remainingTime)}
+            </p>
+            <p className="text-slate-400 mt-1 text-xs sm:text-sm">Tiempo restante de {displayDuration} minutos</p>
           </div>
           
-          {/* Progress Bar */}
+          {/* Progress Bar */}y
           <div className="mt-2 sm:mt-4 mb-3 sm:mb-6">
             <Progress value={progressPercentage} className="h-1.5 sm:h-2 rounded-full" />
             <p className="text-[10px] sm:text-xs text-slate-400 mt-1 sm:mt-2">{Math.round(progressPercentage)}%</p>
