@@ -37,7 +37,8 @@ export function ParagraphCard({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showContent, setShowContent] = useState(true); // Individual content visibility
-  const [overtimeAlertTriggered, setOvertimeAlertTriggered] = useState(false);
+  const [warningAlertPlayed, setWarningAlertPlayed] = useState(false);
+  const [dangerAlertPlayed, setDangerAlertPlayed] = useState(false);
   const cardRef = useRef(null);
   
   // Sync with global show/hide state
@@ -88,27 +89,38 @@ export function ParagraphCard({
     }
   }, [isCurrentParagraph]);
 
-  // Overtime alert - trigger once when time is exceeded
+  // Overtime alerts for warning (orange) and danger (red) states
   useEffect(() => {
-    if (isOverTime && !overtimeAlertTriggered && overtimeAlertEnabled && isCurrentParagraph) {
-      setOvertimeAlertTriggered(true);
-      
-      // Play sound if enabled
-      if (soundEnabled && playNotificationSound) {
-        playNotificationSound('urgent');
+    if (!isCurrentParagraph || !overtimeAlertEnabled) return;
+
+    // Trigger warning sound (single beep) when entering warning time
+    if (isWarningTime && !warningAlertPlayed) {
+      setWarningAlertPlayed(true);
+      if (soundEnabled) {
+        playNotificationSound('warning'); // Single beep
       }
-      
-      // Trigger vibration if enabled
-      if (vibrationEnabled && triggerVibration) {
-        triggerVibration([200, 100, 200, 100, 200]);
+      if (vibrationEnabled) {
+        triggerVibration([150]);
       }
     }
-  }, [isOverTime, overtimeAlertTriggered, overtimeAlertEnabled, isCurrentParagraph, soundEnabled, vibrationEnabled, playNotificationSound, triggerVibration]);
 
-  // Reset overtime alert when paragraph changes
+    // Trigger danger sound (double beep) when entering danger time
+    if (isDangerTime && !dangerAlertPlayed) {
+      setDangerAlertPlayed(true);
+      if (soundEnabled) {
+        playNotificationSound('urgent'); // Double beep
+      }
+      if (vibrationEnabled) {
+        triggerVibration([150, 100, 150]);
+      }
+    }
+  }, [isCurrentParagraph, isWarningTime, isDangerTime, warningAlertPlayed, dangerAlertPlayed, overtimeAlertEnabled, soundEnabled, vibrationEnabled, playNotificationSound, triggerVibration]);
+
+  // Reset alerts when paragraph changes
   useEffect(() => {
     if (!isCurrentParagraph) {
-      setOvertimeAlertTriggered(false);
+      setWarningAlertPlayed(false);
+      setDangerAlertPlayed(false);
     }
   }, [isCurrentParagraph]);
 
