@@ -72,21 +72,47 @@ const BACKEND_URL =
 const API = `${BACKEND_URL}/api`;
 
 /**
- * Augments the analysis result by identifying "important ideas" in questions,
- * adding a 'highlight' content type, and adjusting time calculations.
+ * Augments the analysis result by adding extra time for special content types
+ * like images, scriptures, notes, and "important ideas" (highlights).
  * @param {object} result The original analysis result from the backend.
- * @param {number} timePerHighlight The number of seconds to add for each highlight found.
+ * @param {number} timePerItem The number of seconds to add for each special item found.
  * @returns {object} The augmented analysis result.
  */
-const augmentAnalysisResultWithHighlights = (result, timePerHighlight) => {
+const augmentAnalysisResult = (result, timePerItem) => {
   if (!result || !result.paragraphs) return result;
 
   const augmentedResult = JSON.parse(JSON.stringify(result)); // Deep copy to avoid direct mutation
   let totalAddedTime = 0;
-  let totalHighlights = 0;
+  const counts = {
+    highlights: 0,
+    images: 0,
+    scriptures: 0,
+    notes: 0,
+  };
 
   augmentedResult.paragraphs.forEach((p) => {
     let paragraphTimeIncrease = 0;
+
+    // For images, scriptures, and notes, we add time only once if the paragraph contains them,
+    // assuming the user will view the item once for the whole paragraph.
+    const hasImage = p.questions.some(q => q.content_type?.includes('image'));
+    const hasScripture = p.questions.some(q => q.content_type?.includes('scripture'));
+    const hasNote = p.questions.some(q => q.content_type?.includes('note'));
+
+    if (hasImage) {
+      paragraphTimeIncrease += timePerItem;
+      counts.images++;
+    }
+    if (hasScripture) {
+      paragraphTimeIncrease += timePerItem;
+      counts.scriptures++;
+    }
+    if (hasNote) {
+      paragraphTimeIncrease += timePerItem;
+      counts.notes++;
+    }
+
+    // For "important ideas" (highlights), we count each occurrence as they require individual focus.
     p.questions.forEach((q) => {
       if (q.parenthesis_content?.includes('"') || q.parenthesis_content?.includes('“')) {
         // Use a global regex to find all matches, including smart quotes
@@ -94,8 +120,8 @@ const augmentAnalysisResultWithHighlights = (result, timePerHighlight) => {
 
         if (matches.length > 0) {
           const highlightsInQuestion = matches.length;
-          paragraphTimeIncrease += highlightsInQuestion * timePerHighlight;
-          totalHighlights += highlightsInQuestion;
+          paragraphTimeIncrease += highlightsInQuestion * timePerItem;
+          counts.highlights += highlightsInQuestion;
 
           q.content_type = q.content_type ? `${q.content_type}_highlight` : 'highlight';
           // Store all extracted texts in a new array property
@@ -113,10 +139,19 @@ const augmentAnalysisResultWithHighlights = (result, timePerHighlight) => {
 
   if (totalAddedTime > 0) {
     augmentedResult.total_time_seconds += totalAddedTime;
-    toast.info(`${totalHighlights} "Ideas importantes" encontradas. Se añadieron ${totalAddedTime}s al tiempo total.`);
+
+    const messages = [];
+    if (counts.highlights > 0) messages.push(`${counts.highlights} "Ideas importantes"`);
+    if (counts.images > 0) messages.push(`${counts.images} párrafos con imagen`);
+    if (counts.scriptures > 0) messages.push(`${counts.scriptures} párrafos con texto para leer`);
+    if (counts.notes > 0) messages.push(`${counts.notes} párrafos con nota`);
+
+    if (messages.length > 0) {
+      toast.info(`${messages.join(', ')}. Se añadieron ${totalAddedTime}s al tiempo total.`);
+    }
   }
 
-  augmentedResult.total_highlights = totalHighlights;
+  augmentedResult.total_highlights = counts.highlights;
 
   return augmentedResult;
 };
@@ -362,23 +397,18 @@ export default function HomePage() {
 
   const exitPresentationMode = useCallback(() => {
     setIsPresentationMode(false);
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(err => {
-        console.log('Exit fullscreen error:', err);
-      });
-    }
   }, []);
 
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement && isPresentationMode) {
-        setIsPresentationMode(false);
+        exitPresentationMode();
       }
-    };
+    }
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [isPresentationMode]);
+  }, [isPresentationMode, exitPresentationMode]);
 
   // Paragraph navigation
   const goToNextParagraph = useCallback(() => {
@@ -543,7 +573,7 @@ export default function HomePage() {
         }
       );
       
-      const finalResult = augmentAnalysisResultWithHighlights(response.data, answerTime);
+      const finalResult = augmentAnalysisResult(response.data, answerTime);
       
       setAnalysisResult(finalResult);
       setElapsedTime(0);
@@ -1513,17 +1543,13 @@ export default function HomePage() {
           onToggleTimer={toggleTimer}
           onExit={exitPresentationMode}
           currentParagraphIndex={currentManualParagraph}
-          theme={presentationTheme}
           startTime={startTime}
           endTime={endTime}
-          manualEndTime={manualEndTime}
           introductionTime={introductionDuration}
           conclusionTime={conclusionDuration}
           studyPhase={presentationPhase}
-          onPhaseChange={setPresentationPhase}
           phaseElapsedTime={currentSegmentElapsedTime}
           externalReviewQuestion={presentationReviewQuestion}
-          onReviewQuestionChange={setPresentationReviewQuestion}
           scaleFactor={getScaleFactor()}
           onAddComment={handleAddComment}
           onStartStudy={startIntroductionMode}
