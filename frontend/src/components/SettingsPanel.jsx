@@ -1,6 +1,7 @@
-import { Clock, MessageCircleQuestion, Settings, Timer, Mic, Sparkles } from "lucide-react";
+import { Clock, MessageCircleQuestion, Settings, Timer, Mic, Sparkles, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 
 export function SettingsPanel({ 
   readingSpeed, 
@@ -13,6 +14,8 @@ export function SettingsPanel({
   setIntroductionDuration,
   closingWordsDuration,
   setClosingWordsDuration,
+  fiveMinuteWarningEnabled,
+  setFiveMinuteWarningEnabled,
   darkMode = false
 }) {
   const speedOptions = [
@@ -179,6 +182,26 @@ export function SettingsPanel({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Alerta de 5 minutos */}
+        <div className={`flex items-center justify-between pt-4 sm:pt-6 border-t ${darkMode ? 'border-zinc-700' : 'border-slate-200'}`}>
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-orange-500" />
+            <div>
+              <label htmlFor="five-min-warning" className={`font-semibold ${darkMode ? 'text-zinc-200' : 'text-slate-700'}`}>
+                Aviso de 5 minutos
+              </label>
+              <p className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+                Notifica cuando falten 5 min para terminar.
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="five-min-warning"
+            checked={fiveMinuteWarningEnabled}
+            onCheckedChange={setFiveMinuteWarningEnabled}
+          />
         </div>
       </CardContent>
     </Card>
