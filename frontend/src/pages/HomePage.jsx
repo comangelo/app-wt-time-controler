@@ -177,7 +177,8 @@ export default function HomePage() {
   const exportRef = useRef(null);
   // Notification state
   const [notificationPlayed, setNotificationPlayed] = useState({
-    now: false
+    now: false,
+    fiveMin: false,
   });
   // Settings with localStorage persistence
   const [soundEnabled, setSoundEnabled] = useLocalStorage('pdfTimer_soundEnabled', true);
@@ -186,6 +187,7 @@ export default function HomePage() {
   const [overtimeAlertEnabled, setOvertimeAlertEnabled] = useLocalStorage('pdfTimer_overtimeAlert', true);
   const [darkMode, setDarkMode] = useLocalStorage('pdfTimer_darkMode', false);
   const [darkTheme, setDarkTheme] = useLocalStorageString('pdfTimer_darkTheme', defaultDarkTheme);
+  const [fiveMinuteWarningEnabled, setFiveMinuteWarningEnabled] = useLocalStorage('pdfTimer_fiveMinuteWarning', true);
   
   // Get current theme config
   const currentTheme = darkMode ? (darkThemes[darkTheme] || darkThemes.zinc) : null;
@@ -489,21 +491,6 @@ export default function HomePage() {
     }
   }, [isTimerRunning, analysisResult, getAdjustedFinalQuestionsTime, lowTimeAlertShown, playNotificationSound, triggerVibration]);
 
-  // Check for notification triggers
-  useEffect(() => {
-    if (!isTimerRunning || !analysisResult) return;
-    const finalQuestionsSeconds = getFinalQuestionsTimeSeconds();
-    if (finalQuestionsSeconds <= 0) return;
-    const timeUntilFinalQuestions = finalQuestionsSeconds - elapsedTime;
-
-    if (timeUntilFinalQuestions <= 0 && timeUntilFinalQuestions > -5 && !notificationPlayed.now) {
-      playNotificationSound('final');
-      triggerVibration([500, 200, 500, 200, 500]);
-      setNotificationPlayed(prev => ({ ...prev, now: true }));
-      toast.success("🎯 ¡Es hora de las preguntas de repaso!", { duration: 8000 });
-    }
-  }, [elapsedTime, isTimerRunning, analysisResult, notificationPlayed, playNotificationSound, getFinalQuestionsTimeSeconds, triggerVibration]);
-
   // Initialize remaining time when analysis is complete or duration changes
   useEffect(() => {
     if (analysisResult) {
@@ -634,7 +621,7 @@ export default function HomePage() {
     setRemainingTime(totalDurationSeconds);
     setStartTime(null);
     setEndTime(null);
-    setNotificationPlayed({ now: false });
+    setNotificationPlayed({ now: false, fiveMin: false });
     setCurrentManualParagraph(0);
     setLowTimeAlertShown(false);
     setParagraphStats({});
@@ -649,6 +636,21 @@ export default function HomePage() {
     setCommentStats({ paragraphs: {}, review: {} }); // Reset comments
     setPresentationPhase('initial'); // Reset phase
   };
+
+  // Check for 5-minute warning
+  useEffect(() => {
+    if (!isTimerRunning || !analysisResult || !fiveMinuteWarningEnabled) return;
+
+    if (remainingTime <= 300 && remainingTime > 295 && !notificationPlayed.fiveMin) {
+      playNotificationSound('urgent');
+      triggerVibration([500, 200, 500]);
+      setNotificationPlayed(prev => ({ ...prev, fiveMin: true }));
+      toast.warning("EN 5 MINUTOS DEBE CONCLUIR", {
+        duration: 10000,
+        important: true,
+      });
+    }
+  }, [remainingTime, isTimerRunning, analysisResult, fiveMinuteWarningEnabled, notificationPlayed, playNotificationSound, triggerVibration]);
 
   const resetAll = () => {
     setAnalysisResult(null);
@@ -1210,6 +1212,8 @@ export default function HomePage() {
               setIntroductionDuration={setIntroductionDuration}
               closingWordsDuration={closingWordsDuration}
               setClosingWordsDuration={setClosingWordsDuration}
+              fiveMinuteWarningEnabled={fiveMinuteWarningEnabled}
+              setFiveMinuteWarningEnabled={setFiveMinuteWarningEnabled}
               darkMode={darkMode}
             />
             <UploadZone
