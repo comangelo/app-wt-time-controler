@@ -36,7 +36,7 @@ db = None
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     global client, db
-    
+
     # Startup
     try:
         logger.info("Connecting to MongoDB...")
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
         # Test connection
         await client.admin.command('ping')
         db = client[db_name]
-        
+
         # Create indexes
         await db.pdf_analyses.create_index([("timestamp", -1)])
         await db.status_checks.create_index([("timestamp", -1)])
@@ -58,9 +58,9 @@ async def lifespan(app: FastAPI):
         logger.warning(f"MongoDB connection failed: {e}. App will run without database.")
         # Create a None db so the app can still serve static endpoints
         db = None
-    
+
     yield
-    
+
     # Shutdown
     if client:
         client.close()
@@ -132,7 +132,7 @@ class TextLine:
     def __init__(self, text: str, font_size: float):
         self.text = text.strip()
         self.font_size = font_size
-    
+
     def __repr__(self):
         return f"TextLine({self.font_size:.1f}: {self.text[:50]}...)"
 
@@ -142,7 +142,7 @@ def extract_text_with_sizes(pdf_bytes: bytes) -> List[TextLine]:
     Returns individual spans to preserve font size information."""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     lines = []
-    
+
     for page in doc:
         blocks = page.get_text('dict')['blocks']
         for block in blocks:
@@ -153,7 +153,7 @@ def extract_text_with_sizes(pdf_bytes: bytes) -> List[TextLine]:
                         size = span['size']
                         if text:
                             lines.append(TextLine(text, round(size, 1)))
-    
+
     doc.close()
     return lines
 
@@ -176,31 +176,31 @@ def split_into_paragraphs(text: str) -> List[str]:
     Lines without numbers are joined to the current paragraph.
     """
     paragraphs = []
-    
+
     # First, try to split by paragraph numbers at the start of lines
     lines = text.split('\n')
     current_paragraph_lines = []
     current_number = None
-    
+
     for line in lines:
         line = line.strip()
         if not line:
             continue
-        
+
         # Check if line starts with a number followed by space or period (paragraph marker)
         # Matches: "1 Text", "2 Text", "1, 2 Text", "1. Text", etc.
         match = re.match(r'^(\d+(?:\s*,\s*\d+)*)[.\s]+(.+)$', line)
-        
+
         if match:
             num_str = match.group(1)
             content = match.group(2)
-            
+
             # Get the first number in case of grouped paragraphs like "1, 2"
             first_num = int(re.match(r'\d+', num_str).group())
-            
+
             # Check if this is a question line (contains ¿ or ends with ?)
             is_question = '¿' in content or content.endswith('?')
-            
+
             if is_question:
                 # This is a question - it belongs to the current paragraph
                 if current_paragraph_lines:
@@ -222,20 +222,20 @@ def split_into_paragraphs(text: str) -> List[str]:
                 current_paragraph_lines.append(line)
             else:
                 current_paragraph_lines = [line]
-    
+
     # Add the last paragraph
     if current_paragraph_lines:
         paragraph_text = ' '.join(current_paragraph_lines)
         paragraph_text = re.sub(r'\s+', ' ', paragraph_text).strip()
         paragraphs.append(paragraph_text)
-    
+
     # If no numbered paragraphs found, fall back to double newline split
     if len(paragraphs) <= 1 and '\n\n' in text:
         paragraphs = re.split(r'\n\s*\n+', text.strip())
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
         # Clean up each paragraph
         paragraphs = [re.sub(r'\s+', ' ', p).strip() for p in paragraphs]
-    
+
     return paragraphs if paragraphs else [text.strip()]
 
 
@@ -257,7 +257,7 @@ def extract_question_with_parenthesis(question_text: str) -> dict:
     - "note" if contains "Vea también la nota", "nota"
     - "both" if contains BOTH image reference AND scripture
     - "" if no special content
-    
+
     Returns dict with:
     - text: the question text
     - parenthesis_content: content inside parentheses
@@ -265,24 +265,24 @@ def extract_question_with_parenthesis(question_text: str) -> dict:
     """
     # First clean any hyphenated words in the input
     question_text = clean_hyphenated_text(question_text)
-    
+
     result = {
         "text": question_text.strip(),
         "parenthesis_content": "",
         "content_type": ""
     }
-    
+
     # Pattern to find parentheses content after the question
     # Match content like: "¿Pregunta? (Vea también la imagen)" or "¿Pregunta? (Salmos 32:17)"
     paren_match = re.search(r'\?\s*\(([^)]+)\)', question_text)
-    
+
     if paren_match:
         paren_content = paren_match.group(1).strip()
         result["parenthesis_content"] = paren_content
-        
+
         # Remove the parenthesis from the question text for cleaner display
         result["text"] = question_text[:paren_match.start() + 1].strip()
-        
+
         # Classify the content
         result["content_type"] = classify_parenthesis_content(paren_content)
     else:
@@ -290,17 +290,17 @@ def extract_question_with_parenthesis(question_text: str) -> dict:
         paren_match_anywhere = re.search(r'\(([^)]+)\)', question_text)
         if paren_match_anywhere:
             paren_content = paren_match_anywhere.group(1).strip()
-            
+
             # Check if it's a meaningful reference (not just a number or short text)
             if len(paren_content) > 3:
                 result["parenthesis_content"] = paren_content
-                
+
                 # Remove parenthesis from text
                 result["text"] = question_text.replace(f'({paren_content})', '').strip()
-                
+
                 # Classify the content
                 result["content_type"] = classify_parenthesis_content(paren_content)
-    
+
     return result
 
 
@@ -310,10 +310,10 @@ def classify_parenthesis_content(paren_content: str) -> str:
     Returns: "image", "scripture", "note", "both", or ""
     """
     paren_lower = paren_content.lower()
-    
+
     # Check for note reference - "vea también la nota", "vea la nota"
     has_note = bool(re.search(r'[Vv]ea\s*(también\s+)?la\s+nota', paren_content, re.IGNORECASE))
-    
+
     # Check for image reference - but NOT if it's a note
     # "vea también la imagen", "vea también las imágenes", "vea la ilustración", "imagen", "imágenes"
     has_image = False
@@ -326,13 +326,13 @@ def classify_parenthesis_content(paren_content: str) -> str:
         # Also check for generic "Vea también" without specific word (usually means image)
         if not has_image:
             has_image = bool(re.search(r'^[Vv]ea\s+también\s*$', paren_content.strip(), re.IGNORECASE))
-    
+
     # Check for scripture reference with multiple patterns:
     # 1. "lea/Lea/LEA/léalo/Léalo" followed by book name and chapter:verse - e.g., "lea 2 Pedro 3:9", "Lea Salmo 138:6"
     # 2. Standard format - "Salmos 32:17", "Juan 3:16", "1 Corintios 13:4"
     # 3. Format without space - "Salmo62:8", "Marcos3:1-6"
     has_scripture = False
-    
+
     # Pattern 1: Starts with "lea", "Lea", "LEA", "léalo", "Léalo", "LÉALO" followed by scripture
     if re.search(r'^[Ll][EeÉé][Aa](lo|LO)?\s+', paren_content):
         # Extract the part after "lea/léalo" and check if it looks like a scripture
@@ -340,15 +340,15 @@ def classify_parenthesis_content(paren_content: str) -> str:
         # Check for chapter:verse pattern (with or without space before numbers)
         if re.search(r'\d+:\d+', scripture_part):
             has_scripture = True
-    
+
     # Pattern 2: Standard format with space - "Salmos 32:17", "Juan 3:16"
     if not has_scripture:
         has_scripture = bool(re.search(r'[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+', paren_content))
-    
+
     # Pattern 3: Format without space - "Salmo62:8", "Marcos3:1-6"
     if not has_scripture:
         has_scripture = bool(re.search(r'[A-Za-záéíóúÁÉÍÓÚñÑ]+\d+:\d+', paren_content))
-    
+
     # Classify based on what was found
     if has_note:
         return "note"
@@ -358,7 +358,7 @@ def classify_parenthesis_content(paren_content: str) -> str:
         return "image"
     elif has_scripture:
         return "scripture"
-    
+
     return ""
 
 
@@ -366,19 +366,19 @@ def extract_lea_scriptures_from_text(text: str) -> List[dict]:
     """
     Extract scripture references that start with "lea/Lea/LEA/léalo" from paragraph text.
     These are inline scripture references that should be counted as extra content.
-    
+
     Returns a list of dicts with:
     - parenthesis_content: the full content (e.g., "lea Salmo 62:8")
     - content_type: "scripture"
     """
     scriptures = []
-    
+
     # Pattern to find (lea/Lea/léalo followed by scripture reference)
     # Matches: (lea Salmo 62:8), (Lea Salmo 138:6), (lea 2 Pedro 3:9), (lea Marcos3:1-6)
     pattern = r'\(([Ll][EeÉé][Aa](?:lo|LO)?\s+[^)]+\d+:\d+[^)]*)\)'
-    
+
     matches = re.findall(pattern, text)
-    
+
     for match in matches:
         # Verify it contains a scripture reference (chapter:verse pattern)
         if re.search(r'\d+:\d+', match):
@@ -386,7 +386,7 @@ def extract_lea_scriptures_from_text(text: str) -> List[dict]:
                 "parenthesis_content": match.strip(),
                 "content_type": "scripture"
             })
-    
+
     return scriptures
 
 
@@ -412,19 +412,19 @@ def join_hyphenated_lines(parts: List[str]) -> str:
     """
     if not parts:
         return ""
-    
+
     result = []
     for i, part in enumerate(parts):
         part = part.strip()
         if not part:
             continue
-            
+
         if result and result[-1].endswith('-'):
             # Previous part ended with hyphen - join without space
             result[-1] = result[-1][:-1] + part
         else:
             result.append(part)
-    
+
     return ' '.join(result)
 
 
@@ -436,89 +436,89 @@ def process_pdf_with_font_sizes(pdf_bytes: bytes) -> dict:
     2. Having smaller font size than paragraph text
     """
     lines = extract_text_with_sizes(pdf_bytes)
-    
+
     if not lines:
         return {"paragraphs": [], "questions_by_paragraph": {}}
-    
+
     # Calculate the most common (mode) font size - this is likely the paragraph text size
     size_counts = {}
     for line in lines:
         size_key = round(line.font_size, 1)
         size_counts[size_key] = size_counts.get(size_key, 0) + 1
-    
+
     # Find the dominant font size (paragraph text)
     paragraph_font_size = max(size_counts.keys(), key=lambda k: size_counts[k])
-    
+
     # Tolerance for font size comparison (allow small variations)
     size_tolerance = 0.5
-    
+
     paragraphs = []
     questions_by_paragraph = {}
     current_paragraph_lines = []
     current_paragraph_number = None
-    
+
     for line in lines:
         text = line.text
         font_size = line.font_size
-        
+
         if not text:
             continue
-        
+
         # Check if line starts with number(s) followed by period: "1." or "12."
         # Pattern: one or two digits followed by "."
         question_pattern = re.match(r'^(\d{1,2})\.\s*(.+)$', text)
-        
+
         # Check if line starts with number followed by space (paragraph start): "1 Texto"
         paragraph_pattern = re.match(r'^(\d{1,2})\s+([^.?¿].*)$', text)
-        
+
         # Determine if this is a question based on:
         # 1. Matches question pattern (number + period)
         # 2. Has smaller font size than paragraph text
         # 3. Contains question marks
         is_smaller_font = font_size < (paragraph_font_size - size_tolerance)
         has_question_mark = '¿' in text or text.endswith('?')
-        
+
         if question_pattern:
             question_num = int(question_pattern.group(1))
             question_text = question_pattern.group(2).strip()
-            
+
             # This is likely a question if it has smaller font OR contains question marks
             if is_smaller_font or has_question_mark:
                 # Add to questions for this paragraph number
                 if question_num not in questions_by_paragraph:
                     questions_by_paragraph[question_num] = []
                 questions_by_paragraph[question_num].append(question_text)
-                
+
                 # Also add to current paragraph text for display
                 if current_paragraph_lines:
                     current_paragraph_lines.append(text)
                 continue
-        
+
         if paragraph_pattern:
             para_num = int(paragraph_pattern.group(1))
             para_text = paragraph_pattern.group(2).strip()
-            
+
             # This looks like a paragraph start (number + space + non-question text)
             if not is_smaller_font and not has_question_mark:
                 # Save previous paragraph
                 if current_paragraph_lines:
                     paragraphs.append('\n'.join(current_paragraph_lines))
-                
+
                 # Start new paragraph
                 current_paragraph_lines = [text]
                 current_paragraph_number = para_num
                 continue
-        
+
         # Default: add to current paragraph
         if current_paragraph_lines:
             current_paragraph_lines.append(text)
         else:
             current_paragraph_lines = [text]
-    
+
     # Save last paragraph
     if current_paragraph_lines:
         paragraphs.append('\n'.join(current_paragraph_lines))
-    
+
     return {
         "paragraphs": paragraphs,
         "questions_by_paragraph": questions_by_paragraph,
@@ -534,15 +534,15 @@ def detect_horizontal_line_separator(pdf_bytes: bytes) -> dict:
     """
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        
+
         last_line_page = -1
         last_line_y = -1
-        
+
         for page_num in range(len(doc)):
             page = doc[page_num]
             page_height = page.rect.height
             drawings = page.get_drawings()
-            
+
             for drawing in drawings:
                 rect = drawing.get('rect')
                 if rect:
@@ -554,7 +554,7 @@ def detect_horizontal_line_separator(pdf_bytes: bytes) -> dict:
                         if rect.y0 > page_height * 0.3:
                             last_line_page = page_num
                             last_line_y = rect.y0
-                
+
                 # Also check line paths
                 items = drawing.get('items', [])
                 for item in items:
@@ -566,9 +566,9 @@ def detect_horizontal_line_separator(pdf_bytes: bytes) -> dict:
                             if line_width > 200 and start.y > page_height * 0.3:
                                 last_line_page = page_num
                                 last_line_y = start.y
-        
+
         doc.close()
-        
+
         return {
             "found": last_line_page >= 0,
             "page": last_line_page,
@@ -583,31 +583,31 @@ def extract_questions_after_horizontal_line(pdf_bytes: bytes, line_info: dict) -
     """
     Extract questions that appear after the horizontal line separator.
     These are the final discussion questions (Preguntas de Repaso).
-    
+
     Returns a tuple: (list of QuestionInfo, bold title string)
-    
+
     The format can be:
     1. Traditional: "1. ¿Pregunta?" numbered questions
     2. Bullet points: A main question followed by bullet points (˛)
     """
     final_questions = []
     bold_title = ""
-    
+
     if not line_info.get("found"):
         return final_questions, bold_title
-    
+
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         line_page = line_info["page"]
         line_y = line_info["y_position"]
-        
+
         text_items = []  # List of (y_pos, font_size, text, is_bold)
-        
+
         # Get text from the page with the line, below the line
         if line_page >= 0 and line_page < len(doc):
             page = doc[line_page]
             blocks = page.get_text('dict')['blocks']
-            
+
             for block in blocks:
                 if 'lines' in block:
                     for line in block['lines']:
@@ -620,7 +620,7 @@ def extract_questions_after_horizontal_line(pdf_bytes: bytes, line_info: dict) -
                             # Only include text that starts below the line
                             if y_pos > line_y + 5 and text:
                                 text_items.append((y_pos, font_size, text, is_bold))
-        
+
         # Also get text from pages after the line page
         for page_num in range(line_page + 1, len(doc)):
             page = doc[page_num]
@@ -636,35 +636,35 @@ def extract_questions_after_horizontal_line(pdf_bytes: bytes, line_info: dict) -
                             is_bold = bool(flags & 16)
                             if text:
                                 text_items.append((y_pos + (page_num - line_page) * 1000, font_size, text, is_bold))
-        
+
         doc.close()
-        
+
         # Sort by position
         text_items.sort(key=lambda x: x[0])
-        
+
         # Parse the questions
         bullet_points = []
         numbered_questions = []
-        
+
         for y_pos, font_size, text, is_bold in text_items:
             # Skip song references at the end - "CANCIÓN" followed by space and number
             text_upper = text.upper()
             if re.match(r'^CANCI[OÓ]N\s+\d+', text_upper):
                 break
-            
+
             # Skip bullet character alone
             if text == '˛':
                 continue
-            
+
             # Capture the first bold text as the title (if it contains ?)
             if is_bold and not bold_title and '?' in text:
                 bold_title = text
                 continue
-            
+
             # Skip any other all-caps headers
             if text.isupper() and '?' in text:
                 continue
-            
+
             # Check for traditional numbered format: "1. ¿Pregunta?"
             match = re.match(r'^(\d{1,2})\.\s*(.+\?)$', text)
             if match:
@@ -676,7 +676,7 @@ def extract_questions_after_horizontal_line(pdf_bytes: bytes, line_info: dict) -
                 # Check if it looks like a question or topic (names start with uppercase)
                 if '?' in text or (len(text) > 2 and text[0].isupper()):
                     bullet_points.append(text)
-        
+
         # Prefer numbered questions if found
         if numbered_questions:
             for q in numbered_questions:
@@ -685,9 +685,9 @@ def extract_questions_after_horizontal_line(pdf_bytes: bytes, line_info: dict) -
         elif bullet_points:
             for point in bullet_points:
                 final_questions.append(create_question_info(point, QUESTION_ANSWER_TIME, True))
-        
+
         return final_questions, bold_title
-        
+
     except Exception as e:
         logging.warning(f"Error extracting questions after horizontal line: {e}")
         return final_questions, bold_title
@@ -714,7 +714,7 @@ def detect_questions(text: str, paragraph_number: int, is_final_question: bool =
     Ignores "¿QUÉ RESPONDERÍAS?"
     """
     questions = []
-    
+
     # Questions to ignore (case-insensitive)
     IGNORED_PATTERNS = [
         "qué responderías",
@@ -722,7 +722,7 @@ def detect_questions(text: str, paragraph_number: int, is_final_question: bool =
         "qué responderías?",
         "que responderias?",
     ]
-    
+
     def is_ignored_question(q_text: str) -> bool:
         """Check if question should be ignored"""
         q_lower = q_text.lower().strip()
@@ -733,32 +733,32 @@ def detect_questions(text: str, paragraph_number: int, is_final_question: bool =
             if ignored_clean in q_clean or q_clean in ignored_clean:
                 return True
         return False
-    
+
     # Split text into lines to find question lines
     lines = text.split('\n')
-    
+
     for line in lines:
         line = line.strip()
         if not line:
             continue
-        
+
         # Pattern 1 (PRIMARY): "6. pregunta?" - number followed by period (with or without ¿)
         # This matches: "6. ¿Cómo...?" or "6. Cómo...?"
-        pattern_period = rf'^{paragraph_number}\.\s*(.+\?)$'
-        
+        pattern_period = rf'^{paragraph_number}\.\s*(.+)$'
+
         # Pattern 2: "6 ¿pregunta?" - number followed by space and question mark
-        pattern_space = rf'^{paragraph_number}\s+([¿].*\?|.*\?)$'
-        
-        # Pattern 3: "6) pregunta?" or "6- pregunta?" 
-        pattern_other = rf'^{paragraph_number}[\)\-:]\s*(.+\?)$'
-        
+        pattern_space = rf'^{paragraph_number}\s+(.+)$'
+
+        # Pattern 3: "6) pregunta?" or "6- pregunta?"
+        pattern_other = rf'^{paragraph_number}[\)\-:]\s*(.+)$'
+
         # Try patterns in order of priority (period first as per user's format)
         match = re.match(pattern_period, line, re.IGNORECASE)
         if not match:
             match = re.match(pattern_space, line, re.IGNORECASE)
         if not match:
             match = re.match(pattern_other, line, re.IGNORECASE)
-        
+
         if match:
             question_text = match.group(1).strip()
             # Skip ignored questions like "¿QUÉ RESPONDERÍAS?"
@@ -766,7 +766,7 @@ def detect_questions(text: str, paragraph_number: int, is_final_question: bool =
                 continue
             if len(question_text) > 5:
                 questions.append(create_question_info(question_text, QUESTION_ANSWER_TIME, is_final_question))
-    
+
     return questions
 
 
@@ -774,27 +774,27 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
     """
     Extract questions that appear AFTER the horizontal line separator at the bottom.
     These are the final discussion questions (Preguntas de Repaso).
-    
+
     The function first tries to detect a horizontal line in the PDF graphics.
     If pdf_bytes is provided, it uses the line position to find questions after it.
     Otherwise, falls back to text-based detection.
     """
     final_questions = []
-    
+
     # Try to find horizontal line separator using PDF graphics
     if pdf_bytes:
         try:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-            
+
             # Find the last significant horizontal line in the document
             last_line_page = -1
             last_line_y = -1
-            
+
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 page_height = page.rect.height
                 drawings = page.get_drawings()
-                
+
                 for drawing in drawings:
                     rect = drawing.get('rect')
                     if rect:
@@ -806,7 +806,7 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
                             if rect.y0 > page_height * 0.3:
                                 last_line_page = page_num
                                 last_line_y = rect.y0
-                    
+
                     # Also check line paths
                     items = drawing.get('items', [])
                     for item in items:
@@ -818,16 +818,16 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
                                 if line_width > 200 and start.y > page_height * 0.3:
                                     last_line_page = page_num
                                     last_line_y = start.y
-            
+
             # If we found a horizontal line, extract text after it
             if last_line_page >= 0 and last_line_y > 0:
                 # Get all text from the page with the line, below the line
                 page = doc[last_line_page]
-                
+
                 # Get text blocks with position info
                 blocks = page.get_text('dict')['blocks']
                 text_after_line = []
-                
+
                 for block in blocks:
                     if 'lines' in block:
                         block_top = block.get('bbox', [0, 0, 0, 0])[1]
@@ -839,16 +839,16 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
                                     line_text += span['text']
                                 if line_text.strip():
                                     text_after_line.append(line_text.strip())
-                
+
                 # Also get text from pages after the line page
                 for page_num in range(last_line_page + 1, len(doc)):
                     page_text = doc[page_num].get_text()
                     for line in page_text.split('\n'):
                         if line.strip():
                             text_after_line.append(line.strip())
-                
+
                 doc.close()
-                
+
                 # Parse questions from text after the line
                 for line in text_after_line:
                     # Pattern: "número. pregunta?" - one or two digits, period, then question
@@ -857,14 +857,14 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
                         question_text = match.group(2).strip()
                         if len(question_text) > 5:
                             final_questions.append(create_question_info(question_text, QUESTION_ANSWER_TIME, True))
-                
+
                 if final_questions:
                     return final_questions
             else:
                 doc.close()
         except Exception as e:
             logging.warning(f"Error detecting horizontal line: {e}")
-    
+
     # Fallback: Try to find questions after "¿QUÉ RESPONDERÍAS?" marker
     text_lower = text.lower()
     marker_patterns = [
@@ -875,17 +875,17 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
         "¿qué respondería?",
         "que responderia?"
     ]
-    
+
     marker_pos = -1
     for pattern in marker_patterns:
         pos = text_lower.find(pattern)
         if pos != -1:
             marker_pos = pos
             break
-    
+
     if marker_pos == -1:
         return final_questions
-    
+
     # Get text after the marker
     after_marker = text[marker_pos:]
     newline_pos = after_marker.find('\n')
@@ -893,31 +893,31 @@ def extract_final_questions(text: str, pdf_bytes: bytes = None) -> List[Question
         text_after = after_marker[newline_pos + 1:]
     else:
         text_after = ""
-    
+
     if not text_after.strip():
         return final_questions
-    
+
     # Find all questions in the text after the marker
     lines = text_after.split('\n')
-    
+
     for line in lines:
         line = line.strip()
         if not line:
             continue
-        
+
         match = re.match(r'^(\d{1,2})\.\s*(.+\?)$', line, re.IGNORECASE)
         if match:
             question_text = match.group(2).strip()
             if len(question_text) > 5:
                 final_questions.append(create_question_info(question_text, QUESTION_ANSWER_TIME, True))
-    
+
     return final_questions
 
 
 def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisResult:
     """
     Analyze PDF using font size information to detect questions.
-    
+
     Format detected from Watchtower Study articles:
     - Paragraphs: Start with number in bold (size ~6.8), text in size ~11.0
     - Questions: Size ~9.0, number in medium/bold font, text in regular font
@@ -926,39 +926,39 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
     - Final questions: After horizontal line separator at the bottom
     """
     lines = extract_text_with_sizes(pdf_bytes)
-    
+
     if not lines:
         text = extract_text_from_pdf(pdf_bytes)
         return analyze_pdf_content(text, filename)
-    
+
     # Detect horizontal line position for final questions section
     horizontal_line_info = detect_horizontal_line_separator(pdf_bytes)
-    
+
     # Identify font sizes used in document
     size_counts = {}
     for line in lines:
         size_key = round(line.font_size, 1)
         size_counts[size_key] = size_counts.get(size_key, 0) + 1
-    
+
     if not size_counts:
         text = extract_text_from_pdf(pdf_bytes)
         return analyze_pdf_content(text, filename)
-    
+
     # First pass: Group consecutive question lines (size ~9.0)
     # This handles questions that span multiple lines
     grouped_lines = []
     current_question_parts = []
     current_question_nums = None
-    
+
     for line in lines:
         text = line.text.strip()
         font_size = round(line.font_size, 1)
-        
+
         if not text:
             continue
-            
+
         is_question_size = 8.5 <= font_size <= 9.5
-        
+
         if is_question_size:
             # Check if this line starts with paragraph numbers (e.g., "4." or "1, 2.")
             num_match = re.match(r'^([\d,\s]+)\.\s*$', text)
@@ -967,7 +967,7 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                 if current_question_parts and current_question_nums:
                     full_question = join_hyphenated_lines(current_question_parts)
                     grouped_lines.append(('question', current_question_nums, full_question))
-                
+
                 # Start new question
                 numbers_str = num_match.group(1)
                 current_question_nums = [int(n.strip()) for n in numbers_str.split(',') if n.strip().isdigit()]
@@ -989,14 +989,14 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                 grouped_lines.append(('question', current_question_nums, full_question))
                 current_question_parts = []
                 current_question_nums = None
-            
+
             grouped_lines.append(('text', font_size, text))
-    
+
     # Save last question if exists
     if current_question_parts and current_question_nums:
         full_question = ' '.join(current_question_parts)
         grouped_lines.append(('question', current_question_nums, full_question))
-    
+
     # Second pass: Build paragraphs and assign questions
     paragraphs_data = {}  # Dict: paragraph_number -> {text_lines, questions}
     current_para_num = None
@@ -1006,7 +1006,7 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
     final_questions = []
     final_questions_title = ""
     found_final_section = False  # True when we're after the horizontal line
-    
+
     # Use horizontal line detection if available
     if horizontal_line_info and horizontal_line_info.get("found"):
         # We'll extract final questions separately using PDF position data
@@ -1015,13 +1015,13 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
         skip_final_detection = len(final_questions) > 0
     else:
         skip_final_detection = False
-    
+
     for item in grouped_lines:
         item_type = item[0]
-        
+
         if item_type == 'question':
             para_nums, question_text = item[1], item[2]
-            
+
             if found_final_section and not skip_final_detection:
                 # Final questions (fallback if horizontal line detection didn't work)
                 questions = extract_multiple_questions(question_text)
@@ -1037,19 +1037,19 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                             paragraphs_data[pn] = {"text_lines": [], "questions": [], "grouped_with": para_nums.copy()}
                         else:
                             paragraphs_data[pn]["grouped_with"] = para_nums.copy()
-                    
+
                     # Assign question to the last paragraph in the group
                     target_para = para_nums[-1]
                 else:
                     target_para = para_nums[0]
-                
+
                 questions = extract_multiple_questions(question_text)
-                
+
                 for q in questions:
                     if target_para not in paragraphs_data:
                         paragraphs_data[target_para] = {"text_lines": [], "questions": [], "grouped_with": []}
                     paragraphs_data[target_para]["questions"].append(create_question_info(q, QUESTION_ANSWER_TIME, False))
-                    
+
         elif item_type == 'question_text':
             # Question text without number (possibly final questions)
             question_text = item[2]
@@ -1057,14 +1057,14 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                 questions = extract_multiple_questions(question_text)
                 for q in questions:
                     final_questions.append(create_question_info(q, QUESTION_ANSWER_TIME, True))
-                    
+
         elif item_type == 'text':
             font_size, text = item[1], item[2]
-            
+
             # Skip ornament symbols
             if text == '˛':
                 continue
-            
+
             # Check for "¿QUÉ RESPONDERÍA?" marker (fallback if horizontal line not found)
             text_upper = text.upper()
             if not skip_final_detection and ("QUÉ RESPONDERÍA" in text_upper or "QUE RESPONDERIA" in text_upper):
@@ -1076,39 +1076,39 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                     paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
                     current_para_lines = []
                 continue
-            
+
             # If we're after the final questions marker (fallback), collect final questions
             if found_final_section and not skip_final_detection:
                 # Skip song references
                 if text_upper.startswith("CANCIÓN") or text_upper.startswith("CANCION"):
                     continue
-                # Questions contain "?" 
+                # Questions contain "?"
                 if '?' in text:
                     questions = extract_multiple_questions(text)
                     for q in questions:
                         final_questions.append(create_question_info(q, QUESTION_ANSWER_TIME, True))
                 continue
-            
+
             # Check if this is a paragraph number (size ~6.8, just a number)
             is_para_number = 6.0 <= font_size <= 7.5 and text.isdigit()
             is_paragraph_size = 10.5 <= font_size <= 11.5
-            
+
             if is_para_number:
                 # First numbered paragraph found - save initial text as paragraph 1
                 if not found_first_para_number:
                     found_first_para_number = True
                     if initial_para_lines:
                         paragraphs_data[1] = {"text_lines": initial_para_lines.copy(), "questions": []}
-                
+
                 # Save previous paragraph
                 if current_para_num and current_para_lines:
                     if current_para_num not in paragraphs_data:
                         paragraphs_data[current_para_num] = {"text_lines": [], "questions": []}
                     paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
-                
+
                 current_para_num = int(text)
                 current_para_lines = []
-                
+
             elif is_paragraph_size:
                 if current_para_num:
                     # Regular paragraph text
@@ -1116,17 +1116,17 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                 elif not found_first_para_number:
                     # Text before first paragraph number - this is paragraph 1
                     initial_para_lines.append(text)
-    
+
     # Save last paragraph
     if current_para_num and current_para_lines:
         if current_para_num not in paragraphs_data:
             paragraphs_data[current_para_num] = {"text_lines": [], "questions": [], "grouped_with": []}
         paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
-    
+
     # If no numbered paragraphs were found but we have initial text, create paragraph 1
     if not found_first_para_number and initial_para_lines:
         paragraphs_data[1] = {"text_lines": initial_para_lines, "questions": [], "grouped_with": []}
-    
+
     # Build the analysis result
     analyzed_paragraphs = []
     total_words = 0
@@ -1137,26 +1137,26 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
     total_images = 0
     total_scriptures = 0
     total_notes = 0
-    
+
     # Extra time for paragraphs with image, scripture or note references (40 seconds)
     EXTRA_CONTENT_TIME = 40
-    
+
     # Sort paragraphs by number
     for para_num in sorted(paragraphs_data.keys()):
         para_data = paragraphs_data[para_num]
         para_text = ' '.join(para_data["text_lines"])
         questions = para_data["questions"]
         grouped_with = para_data.get("grouped_with", [])
-        
+
         word_count = count_words(para_text)
         reading_time = calculate_reading_time(word_count)
         question_time = len(questions) * QUESTION_ANSWER_TIME
-        
+
         # Count extra content and add time
         para_has_image = False
         para_has_scripture = False
         para_has_note = False
-        
+
         # First, check questions for extra content
         for q in questions:
             if q.content_type == 'both':
@@ -1174,7 +1174,7 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
             elif q.content_type == 'note':
                 total_notes += 1
                 para_has_note = True
-        
+
         # Second, check for "lea" scripture references in the paragraph text itself
         lea_scriptures = extract_lea_scriptures_from_text(para_text)
         for lea_scripture in lea_scriptures:
@@ -1182,11 +1182,11 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
             # Check if this scripture reference is already in one of the questions
             already_counted = False
             lea_content = lea_scripture["parenthesis_content"].lower()
-            
+
             # Extract just the book and chapter:verse from the lea reference
             # e.g., "lea Marcos 3:1-6" -> "marcos 3:1-6"
             lea_scripture_ref = re.sub(r'^[Ll][EeÉé][Aa](?:lo|LO)?\s+', '', lea_content).strip()
-            
+
             for q in questions:
                 if q.parenthesis_content:
                     q_content = q.parenthesis_content.lower()
@@ -1200,7 +1200,7 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                     if lea_scripture_ref == q_scripture_ref:
                         already_counted = True
                         break
-            
+
             if not already_counted:
                 total_scriptures += 1
                 para_has_scripture = True
@@ -1212,7 +1212,7 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
                     parenthesis_content=lea_scripture["parenthesis_content"],
                     content_type="scripture"
                 ))
-        
+
         # Add 40 seconds for each type of extra content
         extra_time = 0
         if para_has_image:
@@ -1221,15 +1221,15 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
             extra_time += EXTRA_CONTENT_TIME
         if para_has_note:
             extra_time += EXTRA_CONTENT_TIME
-        
+
         reading_time += extra_time
-        
+
         total_words += word_count
         total_questions += len(questions)
         total_reading_time += reading_time
         total_question_time += question_time
         cumulative_time += reading_time + question_time
-        
+
         analyzed_paragraphs.append(ParagraphAnalysis(
             number=para_num,
             text=para_text,
@@ -1240,13 +1240,13 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
             cumulative_time_seconds=round(cumulative_time, 2),
             grouped_with=grouped_with
         ))
-    
+
     # Add final questions
     final_questions_start_time = cumulative_time
     final_questions_time = len(final_questions) * QUESTION_ANSWER_TIME
     total_questions += len(final_questions)
     total_question_time += final_questions_time
-    
+
     # Count extra content in final questions
     for q in final_questions:
         if q.content_type == 'both':
@@ -1256,12 +1256,12 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
             total_images += 1
         elif q.content_type == 'scripture':
             total_scriptures += 1
-    
+
     # Calculate paragraph questions (total - final)
     total_paragraph_questions = total_questions - len(final_questions)
-    
+
     FIXED_TOTAL_TIME = 3600  # 60 minutes
-    
+
     return PDFAnalysisResult(
         filename=filename,
         total_words=total_words,
@@ -1284,54 +1284,54 @@ def analyze_pdf_with_font_info(pdf_bytes: bytes, filename: str) -> PDFAnalysisRe
 
 
 def analyze_pdf_with_font_info_configurable(
-    pdf_bytes: bytes, 
-    filename: str, 
-    wpm: int = WORDS_PER_MINUTE, 
-    answer_time: int = QUESTION_ANSWER_TIME
+        pdf_bytes: bytes,
+        filename: str,
+        wpm: int = WORDS_PER_MINUTE,
+        answer_time: int = QUESTION_ANSWER_TIME
 ) -> PDFAnalysisResult:
     """
     Analyze PDF using font size information with configurable reading speed and answer time.
     """
     lines = extract_text_with_sizes(pdf_bytes)
-    
+
     if not lines:
         text = extract_text_from_pdf(pdf_bytes)
         return analyze_pdf_content_configurable(text, filename, wpm, answer_time)
-    
+
     # Detect horizontal line position for final questions section
     horizontal_line_info = detect_horizontal_line_separator(pdf_bytes)
-    
+
     # Identify font sizes used in document
     size_counts = {}
     for line in lines:
         size_key = round(line.font_size, 1)
         size_counts[size_key] = size_counts.get(size_key, 0) + 1
-    
+
     if not size_counts:
         text = extract_text_from_pdf(pdf_bytes)
         return analyze_pdf_content_configurable(text, filename, wpm, answer_time)
-    
+
     # First pass: Group consecutive question lines (size ~9.0)
     grouped_lines = []
     current_question_parts = []
     current_question_nums = None
-    
+
     for line in lines:
         text = line.text.strip()
         font_size = round(line.font_size, 1)
-        
+
         if not text:
             continue
-            
+
         is_question_size = 8.5 <= font_size <= 9.5
-        
+
         if is_question_size:
             num_match = re.match(r'^([\d,\s]+)\.\s*$', text)
             if num_match:
                 if current_question_parts and current_question_nums:
                     full_question = join_hyphenated_lines(current_question_parts)
                     grouped_lines.append(('question', current_question_nums, full_question))
-                
+
                 numbers_str = num_match.group(1)
                 current_question_nums = [int(n.strip()) for n in numbers_str.split(',') if n.strip().isdigit()]
                 current_question_parts = []
@@ -1348,13 +1348,13 @@ def analyze_pdf_with_font_info_configurable(
                 grouped_lines.append(('question', current_question_nums, full_question))
                 current_question_parts = []
                 current_question_nums = None
-            
+
             grouped_lines.append(('text', font_size, text))
-    
+
     if current_question_parts and current_question_nums:
         full_question = ' '.join(current_question_parts)
         grouped_lines.append(('question', current_question_nums, full_question))
-    
+
     # Second pass: Build paragraphs and assign questions
     paragraphs_data = {}
     current_para_num = None
@@ -1364,14 +1364,14 @@ def analyze_pdf_with_font_info_configurable(
     final_questions = []
     final_questions_title = ""
     found_final_section = False
-    
+
     if horizontal_line_info and horizontal_line_info.get("found"):
         final_questions_raw, final_questions_title = extract_questions_after_horizontal_line(pdf_bytes, horizontal_line_info)
         # Update answer_time for final questions with configurable value - preserve parenthesis info
         final_questions = [
             QuestionInfo(
-                text=q.text, 
-                answer_time=answer_time, 
+                text=q.text,
+                answer_time=answer_time,
                 is_final_question=True,
                 parenthesis_content=q.parenthesis_content,
                 content_type=q.content_type
@@ -1381,13 +1381,13 @@ def analyze_pdf_with_font_info_configurable(
         skip_final_detection = len(final_questions) > 0
     else:
         skip_final_detection = False
-    
+
     for item in grouped_lines:
         item_type = item[0]
-        
+
         if item_type == 'question':
             para_nums, question_text = item[1], item[2]
-            
+
             if found_final_section and not skip_final_detection:
                 questions = extract_multiple_questions(question_text)
                 for q in questions:
@@ -1404,27 +1404,27 @@ def analyze_pdf_with_font_info_configurable(
                     target_para = para_nums[-1]
                 else:
                     target_para = para_nums[0]
-                
+
                 questions = extract_multiple_questions(question_text)
-                
+
                 for q in questions:
                     if target_para not in paragraphs_data:
                         paragraphs_data[target_para] = {"text_lines": [], "questions": [], "grouped_with": []}
                     paragraphs_data[target_para]["questions"].append(create_question_info(q, answer_time, False))
-                    
+
         elif item_type == 'question_text':
             question_text = item[2]
             if found_final_section and not skip_final_detection and '?' in question_text:
                 questions = extract_multiple_questions(question_text)
                 for q in questions:
                     final_questions.append(create_question_info(q, answer_time, True))
-                    
+
         elif item_type == 'text':
             font_size, text = item[1], item[2]
-            
+
             if text == '˛':
                 continue
-            
+
             text_upper = text.upper()
             if not skip_final_detection and ("QUÉ RESPONDERÍA" in text_upper or "QUE RESPONDERIA" in text_upper):
                 found_final_section = True
@@ -1434,7 +1434,7 @@ def analyze_pdf_with_font_info_configurable(
                     paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
                     current_para_lines = []
                 continue
-            
+
             if found_final_section and not skip_final_detection:
                 if text_upper.startswith("CANCIÓN") or text_upper.startswith("CANCION"):
                     continue
@@ -1443,38 +1443,38 @@ def analyze_pdf_with_font_info_configurable(
                     for q in questions:
                         final_questions.append(create_question_info(q, answer_time, True))
                 continue
-            
+
             is_para_number = 6.0 <= font_size <= 7.5 and text.isdigit()
             is_paragraph_size = 10.5 <= font_size <= 11.5
-            
+
             if is_para_number:
                 if not found_first_para_number:
                     found_first_para_number = True
                     if initial_para_lines:
                         paragraphs_data[1] = {"text_lines": initial_para_lines.copy(), "questions": [], "grouped_with": []}
-                
+
                 if current_para_num and current_para_lines:
                     if current_para_num not in paragraphs_data:
                         paragraphs_data[current_para_num] = {"text_lines": [], "questions": [], "grouped_with": []}
                     paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
-                
+
                 current_para_num = int(text)
                 current_para_lines = []
-                
+
             elif is_paragraph_size:
                 if current_para_num:
                     current_para_lines.append(text)
                 elif not found_first_para_number:
                     initial_para_lines.append(text)
-    
+
     if current_para_num and current_para_lines:
         if current_para_num not in paragraphs_data:
             paragraphs_data[current_para_num] = {"text_lines": [], "questions": [], "grouped_with": []}
         paragraphs_data[current_para_num]["text_lines"].extend(current_para_lines)
-    
+
     if not found_first_para_number and initial_para_lines:
         paragraphs_data[1] = {"text_lines": initial_para_lines, "questions": [], "grouped_with": []}
-    
+
     # Build the analysis result with configurable times
     analyzed_paragraphs = []
     total_words = 0
@@ -1485,25 +1485,25 @@ def analyze_pdf_with_font_info_configurable(
     total_images = 0
     total_scriptures = 0
     total_notes = 0
-    
+
     # Extra time for paragraphs with image or scripture references (40 seconds)
     EXTRA_CONTENT_TIME = 40
-    
+
     for para_num in sorted(paragraphs_data.keys()):
         para_data = paragraphs_data[para_num]
         para_text = ' '.join(para_data["text_lines"])
         questions = para_data["questions"]
         grouped_with = para_data.get("grouped_with", [])
-        
+
         word_count = count_words(para_text)
         reading_time = calculate_reading_time(word_count, wpm)
         question_time = len(questions) * answer_time
-        
+
         # Count extra content and add time
         para_has_image = False
         para_has_scripture = False
         para_has_note = False
-        
+
         # First, check questions for extra content
         for q in questions:
             if q.content_type == 'both':
@@ -1521,7 +1521,7 @@ def analyze_pdf_with_font_info_configurable(
             elif q.content_type == 'note':
                 total_notes += 1
                 para_has_note = True
-        
+
         # Second, check for "lea" scripture references in the paragraph text itself
         lea_scriptures = extract_lea_scriptures_from_text(para_text)
         for lea_scripture in lea_scriptures:
@@ -1529,11 +1529,11 @@ def analyze_pdf_with_font_info_configurable(
             # Check if this scripture reference is already in one of the questions
             already_counted = False
             lea_content = lea_scripture["parenthesis_content"].lower()
-            
+
             # Extract just the book and chapter:verse from the lea reference
             # e.g., "lea Marcos 3:1-6" -> "marcos 3:1-6"
             lea_scripture_ref = re.sub(r'^[Ll][EeÉé][Aa](?:lo|LO)?\s+', '', lea_content).strip()
-            
+
             for q in questions:
                 if q.parenthesis_content:
                     q_content = q.parenthesis_content.lower()
@@ -1547,7 +1547,7 @@ def analyze_pdf_with_font_info_configurable(
                     if lea_scripture_ref == q_scripture_ref:
                         already_counted = True
                         break
-            
+
             if not already_counted:
                 total_scriptures += 1
                 para_has_scripture = True
@@ -1559,7 +1559,7 @@ def analyze_pdf_with_font_info_configurable(
                     parenthesis_content=lea_scripture["parenthesis_content"],
                     content_type="scripture"
                 ))
-        
+
         # Add 40 seconds for each type of extra content
         extra_time = 0
         if para_has_image:
@@ -1568,15 +1568,15 @@ def analyze_pdf_with_font_info_configurable(
             extra_time += EXTRA_CONTENT_TIME
         if para_has_note:
             extra_time += EXTRA_CONTENT_TIME
-        
+
         reading_time += extra_time
-        
+
         total_words += word_count
         total_questions += len(questions)
         total_reading_time += reading_time
         total_question_time += question_time
         cumulative_time += reading_time + question_time
-        
+
         analyzed_paragraphs.append(ParagraphAnalysis(
             number=para_num,
             text=para_text,
@@ -1587,7 +1587,7 @@ def analyze_pdf_with_font_info_configurable(
             cumulative_time_seconds=round(cumulative_time, 2),
             grouped_with=grouped_with
         ))
-    
+
     # Count extra content in final questions
     for q in final_questions:
         if q.content_type == 'both':
@@ -1599,17 +1599,17 @@ def analyze_pdf_with_font_info_configurable(
             total_scriptures += 1
         elif q.content_type == 'note':
             total_notes += 1
-    
+
     # Calculate paragraph questions (total - final)
     total_paragraph_questions = total_questions - len(final_questions)
-    
+
     final_questions_start_time = cumulative_time
     final_questions_time = len(final_questions) * answer_time
     total_questions += len(final_questions)
     total_question_time += final_questions_time
-    
+
     FIXED_TOTAL_TIME = 3600
-    
+
     return PDFAnalysisResult(
         filename=filename,
         total_words=total_words,
@@ -1634,21 +1634,21 @@ def analyze_pdf_with_font_info_configurable(
 def parse_question_line_watchtower(text: str) -> tuple:
     """
     Parse a Watchtower-style question line.
-    
+
     Formats:
     - "1, 2. ¿En qué situación...?" -> ([1, 2], ["¿En qué situación...?"])
     - "5. ¿Qué consiguieron...?" -> ([5], ["¿Qué consiguieron...?"])
     - "14, 15. ¿Cómo puede...?" -> ([14, 15], ["¿Cómo puede...?"])
     - "3. ¿Primera? ¿Segunda?" -> ([3], ["¿Primera?", "¿Segunda?"])
-    
+
     Returns: (list of paragraph numbers, list of question texts)
     """
     # Pattern: one or more numbers separated by commas, followed by period
     match = re.match(r'^([\d,\s]+)\.\s*(.+)$', text)
-    
+
     if not match:
         return ([], [])
-    
+
     # Extract paragraph numbers
     numbers_str = match.group(1)
     numbers = []
@@ -1656,64 +1656,71 @@ def parse_question_line_watchtower(text: str) -> tuple:
         n = n.strip()
         if n.isdigit():
             numbers.append(int(n))
-    
+
     if not numbers:
         return ([], [])
-    
+
     # Extract question text(s)
     questions_text = match.group(2).strip()
-    
+
     if not questions_text:
         return (numbers, [])
-    
+
     # Extract multiple questions from the text
     questions = extract_multiple_questions(questions_text)
-    
+
     return (numbers, questions)
 
 
 def extract_multiple_questions(text: str) -> list:
     """
     Extract multiple questions from a single text line.
-    Preserves content in parentheses after the question mark.
-    
+    Handles sentences with and without question marks.
+
     Examples:
     - "¿Primera pregunta? ¿Segunda pregunta?" -> ["¿Primera pregunta?", "¿Segunda pregunta?"]
     - "¿Única pregunta?" -> ["¿Única pregunta?"]
     - "¿Pregunta? (Vea imagen)" -> ["¿Pregunta? (Vea imagen)"]
-    - "Pregunta sin signos?" -> ["Pregunta sin signos?"]
+    - "Explique con un ejemplo..." -> ["Explique con un ejemplo..."]
     """
+    if not text.strip():
+        return []
+
+    # If the text does not contain a question mark, treat the whole line as one question.
+    if '?' not in text:
+        return [text.strip()]
+
     questions = []
-    
+
     # Pattern to match questions with optional parenthetical content after them
-    # Matches: ¿...? or ...? optionally followed by (...) 
-    # Updated pattern to capture parentheses content that follows a question
+    # Matches: ¿...? or ...? optionally followed by (...)
     parts = re.findall(r'¿[^?]+\?\s*(?:\([^)]+\))?|[^?¿]+\?\s*(?:\([^)]+\))?', text)
-    
+
     for part in parts:
         part = part.strip()
         if part and len(part) > 3:
             questions.append(part)
-    
-    # If no questions found but text ends with ? or has parentheses, use whole text
-    if not questions and ('?' in text.strip()):
+
+    # If regex didn't find anything but there's a '?', it might be a malformed question.
+    # As a fallback, just return the whole text.
+    if not questions and '?' in text:
         questions.append(text.strip())
-    
+
     return questions
 
 
 def analyze_pdf_content(text: str, filename: str) -> PDFAnalysisResult:
     """Analyze PDF content and return structured analysis"""
     paragraphs = split_into_paragraphs(text)
-    
+
     # Extract final questions (those after "¿QUÉ RESPONDERÍAS?")
     final_questions = extract_final_questions(text)
     final_questions_title = ""  # Default empty title for text-only analysis
-    
-    # Check if text contains "¿QUÉ RESPONDERÍAS?" 
+
+    # Check if text contains "¿QUÉ RESPONDERÍAS?"
     text_lower = text.lower()
     has_que_responderias = "qué responderías" in text_lower or "que responderias" in text_lower
-    
+
     # Find the paragraph that contains "¿QUÉ RESPONDERÍAS?"
     que_responderias_paragraph = -1
     if has_que_responderias:
@@ -1722,7 +1729,7 @@ def analyze_pdf_content(text: str, filename: str) -> PDFAnalysisResult:
             if "qué responderías" in para_lower or "que responderias" in para_lower:
                 que_responderias_paragraph = idx
                 break
-    
+
     analyzed_paragraphs = []
     total_words = 0
     total_questions = 0
@@ -1730,27 +1737,27 @@ def analyze_pdf_content(text: str, filename: str) -> PDFAnalysisResult:
     total_question_time = 0.0
     cumulative_time = 0.0
     final_questions_start_time = 0.0
-    
+
     for i, para_text in enumerate(paragraphs, 1):
         # Skip paragraphs that are after "¿QUÉ RESPONDERÍAS?" (final questions section)
         if que_responderias_paragraph >= 0 and (i - 1) > que_responderias_paragraph:
             continue
-            
+
         word_count = count_words(para_text)
         reading_time = calculate_reading_time(word_count)
-        
+
         # Detect questions for this paragraph
         questions = detect_questions(para_text, i, False)
         question_time = len(questions) * QUESTION_ANSWER_TIME
-        
+
         total_words += word_count
         total_questions += len(questions)
         total_reading_time += reading_time
         total_question_time += question_time
-        
+
         # Calculate cumulative time
         cumulative_time += reading_time + question_time
-        
+
         analyzed_paragraphs.append(ParagraphAnalysis(
             number=i,
             text=para_text,
@@ -1760,18 +1767,18 @@ def analyze_pdf_content(text: str, filename: str) -> PDFAnalysisResult:
             total_time_seconds=round(reading_time + question_time, 2),
             cumulative_time_seconds=round(cumulative_time, 2)
         ))
-    
+
     # Calculate when final questions start (after all paragraphs)
     final_questions_start_time = cumulative_time
-    
+
     # Add final questions time to totals
     final_questions_time = len(final_questions) * QUESTION_ANSWER_TIME
     total_questions += len(final_questions)
     total_question_time += final_questions_time
-    
+
     # Total time is ALWAYS 60 minutes (3600 seconds)
     FIXED_TOTAL_TIME = 3600  # 60 minutes in seconds
-    
+
     return PDFAnalysisResult(
         filename=filename,
         total_words=total_words,
@@ -1794,21 +1801,21 @@ def analyze_pdf_content(text: str, filename: str) -> PDFAnalysisResult:
 
 
 def analyze_pdf_content_configurable(
-    text: str, 
-    filename: str, 
-    wpm: int = WORDS_PER_MINUTE, 
-    answer_time: int = QUESTION_ANSWER_TIME
+        text: str,
+        filename: str,
+        wpm: int = WORDS_PER_MINUTE,
+        answer_time: int = QUESTION_ANSWER_TIME
 ) -> PDFAnalysisResult:
     """Analyze PDF content with configurable reading speed and answer time"""
     paragraphs = split_into_paragraphs(text)
-    
+
     # Extract final questions (those after "¿QUÉ RESPONDERÍAS?")
     final_questions_raw = extract_final_questions(text)
     # Update answer_time for final questions - preserve parenthesis info
     final_questions = [
         QuestionInfo(
-            text=q.text, 
-            answer_time=answer_time, 
+            text=q.text,
+            answer_time=answer_time,
             is_final_question=True,
             parenthesis_content=q.parenthesis_content,
             content_type=q.content_type
@@ -1816,10 +1823,10 @@ def analyze_pdf_content_configurable(
         for q in final_questions_raw
     ]
     final_questions_title = ""
-    
+
     text_lower = text.lower()
     has_que_responderias = "qué responderías" in text_lower or "que responderias" in text_lower
-    
+
     que_responderias_paragraph = -1
     if has_que_responderias:
         for idx, para in enumerate(paragraphs):
@@ -1827,7 +1834,7 @@ def analyze_pdf_content_configurable(
             if "qué responderías" in para_lower or "que responderias" in para_lower:
                 que_responderias_paragraph = idx
                 break
-    
+
     analyzed_paragraphs = []
     total_words = 0
     total_questions = 0
@@ -1835,20 +1842,20 @@ def analyze_pdf_content_configurable(
     total_question_time = 0.0
     cumulative_time = 0.0
     final_questions_start_time = 0.0
-    
+
     for i, para_text in enumerate(paragraphs, 1):
         if que_responderias_paragraph >= 0 and (i - 1) > que_responderias_paragraph:
             continue
-            
+
         word_count = count_words(para_text)
         reading_time = calculate_reading_time(word_count, wpm)
-        
+
         questions_raw = detect_questions(para_text, i, False)
         # Update answer_time for questions - preserve parenthesis info
         questions = [
             QuestionInfo(
-                text=q.text, 
-                answer_time=answer_time, 
+                text=q.text,
+                answer_time=answer_time,
                 is_final_question=False,
                 parenthesis_content=q.parenthesis_content,
                 content_type=q.content_type
@@ -1856,13 +1863,13 @@ def analyze_pdf_content_configurable(
             for q in questions_raw
         ]
         question_time = len(questions) * answer_time
-        
+
         total_words += word_count
         total_questions += len(questions)
         total_reading_time += reading_time
         total_question_time += question_time
         cumulative_time += reading_time + question_time
-        
+
         analyzed_paragraphs.append(ParagraphAnalysis(
             number=i,
             text=para_text,
@@ -1872,14 +1879,14 @@ def analyze_pdf_content_configurable(
             total_time_seconds=round(reading_time + question_time, 2),
             cumulative_time_seconds=round(cumulative_time, 2)
         ))
-    
+
     final_questions_start_time = cumulative_time
     final_questions_time = len(final_questions) * answer_time
     total_questions += len(final_questions)
     total_question_time += final_questions_time
-    
+
     FIXED_TOTAL_TIME = 3600
-    
+
     return PDFAnalysisResult(
         filename=filename,
         total_words=total_words,
@@ -1909,12 +1916,12 @@ async def root():
 
 @api_router.post("/analyze-pdf", response_model=PDFAnalysisResult)
 async def analyze_pdf(
-    file: UploadFile = File(...),
-    wpm: int = WORDS_PER_MINUTE,
-    answer_time_seconds: int = QUESTION_ANSWER_TIME
+        file: UploadFile = File(...),
+        wpm: int = WORDS_PER_MINUTE,
+        answer_time_seconds: int = QUESTION_ANSWER_TIME
 ):
     """Upload and analyze a PDF file for reading time
-    
+
     Args:
         file: PDF file to analyze
         wpm: Words per minute for reading speed (default: 180)
@@ -1922,16 +1929,16 @@ async def analyze_pdf(
     """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="El archivo debe ser un PDF")
-    
+
     # Validate parameters
     if wpm < 100 or wpm > 300:
         raise HTTPException(status_code=400, detail="WPM debe estar entre 100 y 300")
     if answer_time_seconds < 10 or answer_time_seconds > 120:
         raise HTTPException(status_code=400, detail="El tiempo de respuesta debe estar entre 10 y 120 segundos")
-    
+
     try:
         pdf_bytes = await file.read()
-        
+
         # Try to analyze with font size information first
         try:
             result = analyze_pdf_with_font_info_configurable(pdf_bytes, file.filename, wpm, answer_time_seconds)
@@ -1941,7 +1948,7 @@ async def analyze_pdf(
             if not text.strip():
                 raise HTTPException(status_code=400, detail="No se pudo extraer texto del PDF")
             result = analyze_pdf_content_configurable(text, file.filename, wpm, answer_time_seconds)
-        
+
         # Save to database (if available)
         if db is not None:
             try:
@@ -1951,9 +1958,9 @@ async def analyze_pdf(
                 await db.pdf_analyses.insert_one(doc)
             except Exception as db_error:
                 logger.warning(f"Failed to save analysis to database: {db_error}")
-        
+
         return result
-        
+
     except Exception as e:
         logging.error(f"Error analyzing PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el PDF: {str(e)}")
@@ -1966,7 +1973,7 @@ async def get_analyses():
         return []
     try:
         analyses = await db.pdf_analyses.find(
-            {}, 
+            {},
             {"_id": 0}
         ).sort("timestamp", -1).to_list(50)
         for analysis in analyses:
@@ -1998,7 +2005,7 @@ async def get_status_checks():
         return []
     try:
         status_checks = await db.status_checks.find(
-            {}, 
+            {},
             {"_id": 0}
         ).sort("timestamp", -1).to_list(100)
         for check in status_checks:
@@ -2027,3 +2034,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
