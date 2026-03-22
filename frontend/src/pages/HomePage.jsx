@@ -412,33 +412,48 @@ export default function HomePage() {
 
   // Paragraph navigation
   const goToNextParagraph = useCallback(() => {
-    if (!analysisResult || currentManualParagraph >= analysisResult.paragraphs.length - 1) return;
-    
-    // Save actual time spent on current paragraph
+    // Guard against missing data
+    if (!analysisResult || !currentParagraphGroup) return;
+
+    // Find the index of the last paragraph in the current group
+    const lastIndexOfGroup = currentParagraphGroup.indices[currentParagraphGroup.indices.length - 1];
+
+    // Check if we are already at the end of the article
+    if (lastIndexOfGroup >= analysisResult.paragraphs.length - 1) {
+      return;
+    }
+
+    // Save stats for the completed paragraph/group
     if (paragraphStartTime) {
       const actualTimeSpent = Math.round((Date.now() - paragraphStartTime) / 1000);
-      const currentParagraph = analysisResult.paragraphs[currentManualParagraph];
-      const estimatedTime = currentParagraph.total_time_seconds;
-      
+      const firstIndexOfGroup = currentParagraphGroup.indices[0];
+
+      // Use the scaled time for the group if available
+      const scaledEstimated = getAdjustedParagraphTimes(firstIndexOfGroup).adjustedDuration ||
+                              currentParagraphGroup.paragraphs.reduce((sum, p) => sum + p.total_time_seconds, 0);
+
       setParagraphStats(prev => ({
         ...prev,
-        [currentManualParagraph]: {
-          paragraphNumber: currentParagraph.number,
-          estimatedTime: Math.round(estimatedTime),
+        [firstIndexOfGroup]: {
+          paragraphNumber: currentParagraphGroup.paragraphs.map(p => p.number).join(','),
+          estimatedTime: Math.round(scaledEstimated),
           actualTime: actualTimeSpent,
-          difference: actualTimeSpent - Math.round(estimatedTime),
-          wordCount: currentParagraph.word_count,
-          questionsCount: currentParagraph.questions.length
+          difference: actualTimeSpent - Math.round(scaledEstimated),
+          wordCount: currentParagraphGroup.paragraphs.reduce((sum, p) => sum + p.word_count, 0),
+          questionsCount: currentParagraphGroup.paragraphs.reduce((sum, p) => sum + p.questions.length, 0)
         }
       }));
     }
-    
-    const nextIndex = currentManualParagraph + 1;
+
+    // Calculate the index of the next paragraph to jump to
+    const nextIndex = lastIndexOfGroup + 1;
+
+    // Update state to move to the next paragraph
     setCurrentManualParagraph(nextIndex);
     setParagraphStartTime(Date.now());
-    setCurrentSegmentElapsedTime(0); // Immediately reset timer for the new paragraph
-    // toast.success(`Avanzando al Párrafo ${nextIndex + 1}`);
-  }, [currentManualParagraph, analysisResult, paragraphStartTime]);
+    setCurrentSegmentElapsedTime(0); // Reset the timer for the new segment
+
+  }, [analysisResult, currentParagraphGroup, paragraphStartTime, getAdjustedParagraphTimes]);
 
   const goToPreviousParagraph = useCallback(() => {
     if (currentManualParagraph <= 0) return;
@@ -1428,7 +1443,7 @@ export default function HomePage() {
                               setParagraphStats(prev => ({
                                 ...prev,
                                 [firstIndex]: {
-                                  paragraphNumber: group.paragraphs.map(p => p.number).join(', '),
+                                  paragraphNumber: group.paragraphs.map(p => p.number).join(','),
                                   estimatedTime: Math.round(scaledEstimated),
                                   actualTime: actualTimeSpent,
                                   difference: actualTimeSpent - Math.round(scaledEstimated),
@@ -1561,6 +1576,8 @@ export default function HomePage() {
           onFinishStudy={finishStudy}
           totalComments={totalComments}
           currentParagraphGroup={currentParagraphGroup}
+          groupedParagraphs={groupedParagraphs}
+          totalDurationSeconds={totalDurationSeconds}
           getAdjustedParagraphTimes={getAdjustedParagraphTimes}
         />
       )}

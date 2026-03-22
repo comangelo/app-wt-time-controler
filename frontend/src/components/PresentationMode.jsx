@@ -53,9 +53,13 @@ export default function PresentationMode({
                                            scaleFactor = 1,
                                            totalComments = 0,
                                            currentParagraphGroup,
+                                           groupedParagraphs,
+                                           totalDurationSeconds = 3600,
                                            getAdjustedParagraphTimes,
                                          }) {
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const progressPercentage = totalDurationSeconds > 0 ? Math.min(100, (elapsedTime / totalDurationSeconds) * 100) : 0;
 
   // Update current time every second
   useEffect(() => {
@@ -73,7 +77,7 @@ export default function PresentationMode({
         case PHASES.PARAGRAPHS:
           if (currentParagraphGroup && getAdjustedParagraphTimes) {
             const isGrouped = currentParagraphGroup.paragraphs.length > 1;
-            const paragraphNumbers = currentParagraphGroup.paragraphs.map(p => p.number).join(', ');
+            const paragraphNumbers = currentParagraphGroup.paragraphs.map(p => p.number).join(',');
 
             let calculatedTime = 0;
             if (isGrouped) {
@@ -168,14 +172,57 @@ export default function PresentationMode({
   const getSmartButtonText = () => {
     if (studyPhase === 'initial') return "Iniciar Estudio";
     switch (studyPhase) {
-      case PHASES.INTRO: return "Pasar al Párrafo 1";
-      case PHASES.PARAGRAPHS:
-        if (currentParagraphIndex >= (analysisResult?.paragraphs.length || 0) - 1) {
-          return analysisResult?.final_questions?.length > 0 ? "Ir a Repaso" : "Ir a Conclusión";
+      case PHASES.INTRO:
+        if (currentParagraphGroup) {
+          const isGrouped = currentParagraphGroup.paragraphs.length > 1;
+          if (isGrouped) {
+            const paragraphNumbers = currentParagraphGroup.paragraphs.map(p => p.number).join(',');
+            return `Pasar a los Párrafos ${paragraphNumbers}`;
+          }
+          // It's a single paragraph, use its actual number
+          return `Pasar al Párrafo ${currentParagraphGroup.firstParagraph.number}`;
         }
-        return "Siguiente Párrafo";
+        return "Pasar al Párrafo 1"; // Fallback
+      case PHASES.PARAGRAPHS:
+        // If data isn't ready, show a generic text
+        if (!analysisResult || !currentParagraphGroup || !groupedParagraphs) {
+          return "Siguiente Párrafo";
+        }
+
+        // Find the index of the last paragraph in the current group
+        const lastIndexOfGroup = currentParagraphGroup.indices[currentParagraphGroup.indices.length - 1];
+
+        // Check if this is the last group in the article
+        if (lastIndexOfGroup >= analysisResult.paragraphs.length - 1) {
+          if (analysisResult?.final_questions?.length > 0) {
+            return "Pregunta de Repaso 1";
+          }
+          return "Ir a Conclusión";
+        }
+
+        // Find the index of the very next paragraph
+        const nextParagraphIndex = lastIndexOfGroup + 1;
+        // Find the group that the next paragraph belongs to
+        const nextGroup = groupedParagraphs.find(g => g.indices.includes(nextParagraphIndex));
+
+        if (!nextGroup) {
+            return "Siguiente Párrafo"; // Fallback
+        }
+
+        const isNextGrouped = nextGroup.paragraphs.length > 1;
+        if (isNextGrouped) {
+            const paragraphNumbers = nextGroup.paragraphs.map(p => p.number).join(',');
+            return `Siguientes Párrafos ${paragraphNumbers}`;
+        } else {
+            const nextParagraph = nextGroup.firstParagraph;
+            return `Siguiente Párrafo ${nextParagraph.number}`;
+        }
       case PHASES.REVIEW:
-        return externalReviewQuestion >= (analysisResult?.final_questions.length || 0) - 1 ? "Ir a Conclusión" : "Siguiente Pregunta";
+        if (externalReviewQuestion >= (analysisResult?.final_questions.length || 0) - 1) {
+          return "Ir a Conclusión";
+        }
+        // Show the number of the NEXT question (index + 2 because it's 0-indexed)
+        return `Siguiente Pregunta ${externalReviewQuestion + 2}`;
       case PHASES.CONCLUSION: return "Finalizar Estudio";
       default: return "Siguiente";
     }
@@ -217,6 +264,23 @@ export default function PresentationMode({
                 </div>
               </div>
 
+              {/* Progress Bar */}
+              <div className="w-full max-w-[17rem] mb-4">
+                <div className="relative w-full bg-zinc-700/50 rounded-full h-5 overflow-hidden">
+                  {/* Filled part of the bar */}
+                  <div
+                    className="bg-yellow-500 h-5 rounded-full transition-all duration-1000 ease-linear"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                  {/* Percentage text overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-bold text-white text-xs drop-shadow-[0_1px_1px_rgba(0,0,0,0.7)]">
+                      {Math.round(progressPercentage)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Comments Display */}
               {studyPhase !== 'initial' && (
                   <div className="text-center bg-gradient-to-br from-zinc-700 to-zinc-800 border border-zinc-600 rounded-2xl p-3 landscape:p-2 mb-4 shadow-lg">
@@ -225,10 +289,10 @@ export default function PresentationMode({
                   </div>
               )}
 
-              <div className={`w-full max-w-lg rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 py-20 px-6 landscape:py-4 landscape:px-2 shadow-2xl ${colorClass}`}>
-                <p className="text-white text-2xl md:text-3xl landscape:text-xl font-bold tracking-widest">{indicatorText}</p>
-                <p className="text-white text-6xl md:text-8xl landscape:text-6xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
-                <p className="text-white/70 text-2xl md:text-3xl landscape:text-xl font-light">/ {formatTime(Math.round(estimatedTime))}</p>
+              <div className={`w-full max-w-[17rem] rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 py-14 px-6 landscape:py-3 landscape:px-2 shadow-2xl ${colorClass}`}>
+                <p className="text-white text-lg md:text-2xl landscape:text-base font-bold tracking-widest">{indicatorText}</p>
+                <p className="text-white text-4xl md:text-6xl landscape:text-4xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
+                <p className="text-white/70 text-lg md:text-2xl landscape:text-base font-light">/ {formatTime(Math.round(estimatedTime))}</p>
               </div>
               <div className="text-center mt-4 landscape:mt-2">
                 <p className="text-2xl md:text-3xl landscape:text-xl font-black uppercase tracking-wider">{phaseInfo.title}</p>
@@ -278,10 +342,10 @@ export default function PresentationMode({
                 <Button
                     onClick={handleSmartButton}
                     size="lg"
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full px-10 py-5 landscape:py-4 text-xl font-bold tracking-wider uppercase h-auto transition-all active:scale-95 shadow-lg shadow-blue-500/30 flex items-center gap-4"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full px-4 py-3 landscape:py-2 text-sm font-bold tracking-wider uppercase h-auto transition-all active:scale-95 shadow-lg shadow-blue-500/30 flex items-center gap-2"
                 >
                   <span>{getSmartButtonText()}</span>
-                  <ArrowRight className="w-7 h-7" />
+                  <ArrowRight className="w-4 h-4" strokeWidth={3} />
                 </Button>
               </div>
 
@@ -294,6 +358,7 @@ export default function PresentationMode({
             </div>
           </div>
         </div>
-    </div>
+
+      </div>
   );
 }
