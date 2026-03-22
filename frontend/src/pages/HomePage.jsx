@@ -27,7 +27,8 @@ import {
   Bell,
   Volume2,
   VolumeX,
-  Vibrate
+  Vibrate,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -856,6 +857,25 @@ export default function HomePage() {
               </div>
             </div>
             <div className={`flex items-center gap-1 sm:gap-2 p-1 rounded-full ${darkMode ? 'bg-zinc-900/50' : 'bg-slate-100/50'}`}>
+              {/* Manual Button */}
+              <a
+                href="/manual.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Ver manual de usuario"
+              >
+                <Button
+                  variant="ghost"
+                  className={`rounded-full h-10 sm:h-11 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-colors ${
+                    darkMode
+                      ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                      : 'text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Manual
+                </Button>
+              </a>
+
               {/* Dark Mode Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

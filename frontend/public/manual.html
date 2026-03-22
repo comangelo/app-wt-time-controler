@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual de Usuario - Calculadora de Tiempo Atalaya</title>
+    <title>Manual de Usuario - WT Time Controller</title>
     <style>
         * {
             margin: 0;
@@ -368,28 +368,24 @@
 <body>
     <div class="header">
         <div class="header-icon">
-            <img src="/logo-icon.png" alt="Atalaya Timer" style="width: 60px; height: 60px; border-radius: 12px;">
+            <img src="/logo-icon.png" alt="WT Time Controller" style="width: 60px; height: 60px; border-radius: 12px;">
         </div>
         <h1>Manual de Usuario</h1>
-        <p>Calculadora de Tiempo - Atalaya de Estudio</p>
-        <span class="version">Versión 2.5 - Febrero 2026</span>
+        <p>WT Time Controller</p>
+        <span class="version">Versión 3.0 - Marzo 2026</span>
     </div>
 
     <nav class="nav">
         <div class="nav-inner">
             <a href="#introduccion">Introducción</a>
             <a href="#flujo-estudio">Flujo del Estudio</a>
+            <a href="#logica-tiempo">La Lógica del Tiempo</a>
             <a href="#configuracion">Configuración</a>
-            <a href="#horarios">Horarios</a>
             <a href="#cargar-pdf">Cargar PDF</a>
             <a href="#cronometro">Cronómetro</a>
             <a href="#parrafos">Párrafos</a>
-            <a href="#preguntas-repaso">Preguntas de Repaso</a>
-            <a href="#estadisticas">Estadísticas</a>
             <a href="#presentacion">Presentación</a>
             <a href="#alertas">Alertas</a>
-            <a href="#exportar">Exportar</a>
-            <a href="#actualizar">Actualizar App</a>
         </div>
     </nav>
 
@@ -401,49 +397,35 @@
                 <h2>Introducción</h2>
             </div>
             
-            <p>La <strong>Calculadora de Tiempo - Atalaya de Estudio</strong> es una herramienta diseñada para ayudarte a gestionar el tiempo necesario para conducir el artículo de estudio de La Atalaya en el tiempo que tú configures (de <strong>5 a 60 minutos</strong>).</p>
+            <p><strong>WT Time Controller</strong> es una herramienta diseñada para ayudarte a gestionar el tiempo necesario para conducir el artículo de estudio de La Atalaya, ajustándose al tiempo que tú configures.</p>
             
             <h3>¿Qué hace esta aplicación?</h3>
             <div class="feature-grid">
                 <div class="feature-card">
                     <h4>📄 Analiza el PDF</h4>
-                    <p>Extrae automáticamente los párrafos y preguntas del artículo</p>
+                    <p>Extrae párrafos, preguntas y contenido especial (imágenes, notas, textos) del artículo.</p>
                 </div>
                 <div class="feature-card">
                     <h4>⏱️ Calcula tiempos</h4>
-                    <p>Estima el tiempo de lectura basado en la velocidad que configures</p>
+                    <p>Estima un "tiempo ideal" basado en la lectura, preguntas y contenido extra.</p>
                 </div>
                 <div class="feature-card">
                     <h4>📊 Distribuye el tiempo</h4>
-                    <p>Ajusta dinámicamente el tiempo de las preguntas para completar en la duración configurada</p>
+                    <p>Reparte proporcionalmente tu tiempo disponible entre todas las secciones del estudio.</p>
                 </div>
                 <div class="feature-card">
                     <h4>🎯 Guía la conducción</h4>
-                    <p>Muestra en tiempo real si vas adelantado o atrasado con cronómetro por párrafo</p>
+                    <p>Te guía con cronómetros por sección para mantenerte siempre a tiempo.</p>
                 </div>
             </div>
 
             <div class="new-feature">
-                <h4>🆕 Novedades de la Versión 2.5</h4>
-                <p>• <strong>Distintivos de contenido extra</strong>: Los párrafos con preguntas que contienen referencias adicionales (imágenes o textos bíblicos) ahora muestran distintivos visuales<br>
-                • <strong>🖼️ Contiene imagen</strong>: Badge púrpura que indica cuando una pregunta hace referencia a una imagen ("Vea también la imagen...")<br>
-                • <strong>📖 Texto para leer</strong>: Badge azul que indica cuando una pregunta incluye una cita bíblica para leer (ej: "Marcos 3:1-6")<br>
-                • <strong>Ubicación de distintivos</strong>: Se muestran en el encabezado del párrafo, entre el número y el tiempo estimado<br>
-                • <strong>+40 segundos automáticos</strong>: Los párrafos con imágenes o textos para leer tienen 40 segundos adicionales en su tiempo de lectura<br>
-                • <strong>Panel de resumen mejorado</strong>: Ahora muestra total de preguntas de párrafos, preguntas de repaso, imágenes y textos para leer con pills coloridos<br>
-                • <strong>Extracción automática</strong>: El sistema detecta automáticamente el contenido entre paréntesis después de las preguntas</p>
-            </div>
-
-            <div class="new-feature" style="background: linear-gradient(135deg, #ede9fe 0%, #e9d5ff 100%); border-left-color: #a855f7;">
-                <h4>📌 Novedades de la Versión 2.4</h4>
-                <p>• <strong>Palabras de Introducción</strong>: Nueva sección al inicio con cronómetro individual (1 min por defecto)<br>
-                • <strong>Palabras de Conclusión</strong>: Nueva sección al final después de las preguntas de repaso (1 min por defecto)<br>
-                • <strong>Flujo completo del estudio</strong>: Introducción → Párrafos → Preguntas de Repaso → Conclusión<br>
-                • <strong>Botón "Iniciar Estudio"</strong>: Inicia el cronómetro general desde la sección de introducción<br>
-                • <strong>Encabezados rediseñados</strong>: Los cronómetros de párrafos son más minimalistas y ordenados<br>
-                • <strong>Duración configurable</strong>: Slider de 0 a 60 minutos<br>
-                • <strong>Hora de fin editable</strong>: Botón ✏️ para configurar manualmente la hora de finalización<br>
-                • <strong>Cronómetro individual por sección</strong>: Muestra tiempo actual / tiempo estimado</p>
+                <h4>🆕 Novedades Recientes</h4>
+                <p>• <strong>Detección de Preguntas Mejorada:</strong> Ahora se reconocen como preguntas las líneas que empiezan con "número + punto" (ej: "15. Explique..."), aunque no tengan signo de interrogación.</p>
+                <p>• <strong>Cálculo de Tiempo Más Preciso:</strong> Se añade tiempo extra automáticamente a los párrafos que contienen imágenes, textos para leer o notas.</p>
+                <p>• <strong>Aviso de 5 Minutos:</strong> Una nueva alerta opcional te avisa cuando faltan 5 minutos para terminar. El mensaje es dinámico y muestra una cuenta regresiva (y ascendente si te pasas de tiempo).</p>
+                <p>• <strong>Navegación Inteligente:</strong> El botón de avance ahora te dice a qué párrafo o grupo de párrafos saltarás.</p>
+                <p>• <strong>Interfaz Rediseñada:</strong> Múltiples ajustes de diseño para una experiencia más limpia y moderna, tanto en el modo normal como en el de presentación.</p>
             </div>
         </section>
 
@@ -451,7 +433,7 @@
         <section class="section" id="flujo-estudio">
             <div class="section-header">
                 <div class="section-icon">🔄</div>
-                <h2>Flujo Completo del Estudio <span class="badge-new">NUEVO</span></h2>
+                <h2>Flujo Completo del Estudio</h2>
             </div>
             
             <p>La aplicación ahora sigue un flujo estructurado que refleja las partes de un estudio de La Atalaya:</p>
@@ -461,79 +443,74 @@
                 <div class="step-item">
                     <div class="step-number" style="background: #3b82f6;">1</div>
                     <div class="step-content">
-                        <h4>🎤 Palabras de Introducción <span class="badge-new">NUEVO</span></h4>
-                        <p>El conductor introduce el tema del artículo. Duración predeterminada: <strong>1 minuto</strong>. Aquí se encuentra el botón <strong>"Iniciar Estudio"</strong> que arranca el cronómetro general.</p>
+                        <h4>🎤 Palabras de Introducción</h4>
+                        <p>El conductor introduce el tema. La duración es configurable. Aquí se encuentra el botón <strong>"Iniciar Estudio"</strong> que arranca el cronómetro general.</p>
                     </div>
                 </div>
                 <div class="step-item">
                     <div class="step-number" style="background: #22c55e;">2</div>
                     <div class="step-content">
                         <h4>📖 Lectura de Párrafos</h4>
-                        <p>Lectura y desarrollo de cada párrafo del artículo. Cada párrafo tiene su propio cronómetro que muestra el tiempo transcurrido vs. el tiempo estimado. Al terminar el último párrafo, presiona <strong>"Pasar a Preguntas de Repaso"</strong>.</p>
+                        <p>Lectura y desarrollo de cada párrafo. Cada uno tiene su propio cronómetro. Al terminar el último, el botón te guiará a las preguntas de repaso.</p>
                     </div>
                 </div>
                 <div class="step-item">
                     <div class="step-number" style="background: #ef4444;">3</div>
                     <div class="step-content">
                         <h4>❓ Preguntas de Repaso</h4>
-                        <p>Responde las preguntas finales del artículo. Cada pregunta tiene un tiempo asignado. Al terminar la última pregunta, presiona <strong>"Palabras de Conclusión"</strong>.</p>
+                        <p>Responde las preguntas finales. Cada una tiene un tiempo asignado. Al terminar la última, el botón te guiará a la conclusión.</p>
                     </div>
                 </div>
                 <div class="step-item">
                     <div class="step-number" style="background: #a855f7;">4</div>
                     <div class="step-content">
-                        <h4>✨ Palabras de Conclusión <span class="badge-new">NUEVO</span></h4>
-                        <p>El conductor resume los puntos principales y anima a la congregación. Duración predeterminada: <strong>1 minuto</strong>. Aquí se encuentra el botón <strong>"Finalizar Estudio"</strong>.</p>
+                        <h4>✨ Palabras de Conclusión</h4>
+                        <p>El conductor resume los puntos principales. La duración es configurable. Aquí se encuentra el botón <strong>"Finalizar Estudio"</strong>.</p>
                     </div>
                 </div>
             </div>
-
-            <h3>Identificación Visual de Cada Etapa</h3>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0;">
-                <div class="color-indicator" style="background: #dbeafe; border-left: 4px solid #3b82f6;">
-                    <span class="dot" style="background: #3b82f6;"></span>
-                    <span style="color: #1e40af;"><strong>Azul:</strong> Palabras de Introducción</span>
-                </div>
-                <div class="color-indicator" style="background: #dcfce7; border-left: 4px solid #22c55e;">
-                    <span class="dot" style="background: #22c55e;"></span>
-                    <span style="color: #166534;"><strong>Verde:</strong> Párrafo Actual</span>
-                </div>
-                <div class="color-indicator" style="background: #fee2e2; border-left: 4px solid #ef4444;">
-                    <span class="dot" style="background: #ef4444;"></span>
-                    <span style="color: #b91c1c;"><strong>Rojo:</strong> Preguntas de Repaso</span>
-                </div>
-                <div class="color-indicator" style="background: #f3e8ff; border-left: 4px solid #a855f7;">
-                    <span class="dot" style="background: #a855f7;"></span>
-                    <span style="color: #7c3aed;"><strong>Púrpura:</strong> Palabras de Conclusión</span>
-                </div>
-                <div class="color-indicator" style="background: #f1f5f9; border-left: 4px solid #64748b;">
-                    <span class="dot" style="background: #64748b;"></span>
-                    <span style="color: #475569;"><strong>Gris:</strong> Sección Completada</span>
-                </div>
-            </div>
-
-            <h3>Cronómetro Individual por Sección</h3>
-            <p>Cada sección (introducción, párrafo, pregunta, conclusión) tiene su propio cronómetro que muestra:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">⏱️</div>
-                    <div class="text">
-                        <strong>Tiempo transcurrido / Tiempo estimado</strong>
-                        <span>Ejemplo: <code>0:45 / 1:00</code> significa que llevas 45 segundos de 1 minuto estimado</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🔴</div>
-                    <div class="text">
-                        <strong>Alerta de tiempo excedido</strong>
-                        <span>Cuando superas el tiempo estimado, el encabezado cambia a rojo y muestra cuánto tiempo de más llevas</span>
-                    </div>
-                </li>
-            </ul>
 
             <div class="tip-box">
                 <h4>💡 Consejo</h4>
-                <p>El flujo es flexible: puedes navegar entre párrafos y secciones en cualquier momento usando los botones de navegación. El cronómetro general sigue corriendo independientemente de la sección en la que te encuentres.</p>
+                <p>El flujo es flexible: puedes navegar entre párrafos y secciones en cualquier momento. El cronómetro general sigue corriendo independientemente de la sección en la que te encuentres.</p>
+            </div>
+        </section>
+
+        <!-- LÓGICA DEL TIEMPO -->
+        <section class="section" id="logica-tiempo">
+            <div class="section-header">
+                <div class="section-icon">🧠</div>
+                <h2>La Lógica del Tiempo</h2>
+            </div>
+            
+            <p>Entender cómo la aplicación reparte el tiempo es clave para sacarle el máximo provecho. El proceso es inteligente y proporcional.</p>
+
+            <h3>Paso 1: El "Tiempo Ideal"</h3>
+            <p>Cuando subes un PDF, la aplicación calcula un <strong>tiempo ideal</strong> para estudiarlo. Para cada párrafo, suma:</p>
+            <ul class="icon-list">
+                <li><div class="icon">📖</div><div class="text"><strong>Tiempo de Lectura:</strong> Basado en el número de palabras y tu velocidad configurada.</div></li>
+                <li><div class="icon">❓</div><div class="text"><strong>Tiempo por Pregunta:</strong> Un tiempo fijo (ej. 35s) por cada pregunta detectada.</div></li>
+                <li><div class="icon">🖼️</div><div class="text"><strong>Tiempo por Contenido Especial:</strong> Tiempo extra si el párrafo contiene imágenes, textos para leer o notas.</div></li>
+                <li><div class="icon">💡</div><div class="text"><strong>Tiempo por "Ideas Importantes":</strong> Tiempo extra por cada texto entre comillas dentro de una pregunta.</div></li>
+            </ul>
+            <p>A esto se le suma el tiempo que has configurado para la Introducción, Conclusión y Preguntas de Repaso.</p>
+
+            <h3>Paso 2: El "Factor de Ajuste"</h3>
+            <p>La aplicación compara su "Tiempo Ideal" con tu <strong>"Tiempo Real Disponible"</strong> (el que configuras con el slider de duración o la hora de fin) y calcula un <strong>factor de ajuste</strong>.</p>
+            <ul class="icon-list">
+                <li><div class="icon">📉</div><div class="text">Si tienes <strong>menos tiempo</strong> del ideal, el factor es < 1 (ej. 0.8). Todo se acelera.</div></li>
+                <li><div class="icon">📈</div><div class="text">Si tienes <strong>más tiempo</strong> del ideal, el factor es > 1 (ej. 1.2). Tienes tiempo extra.</div></li>
+            </ul>
+
+            <h3>Paso 3: El Reparto Proporcional</h3>
+            <p>Este factor de ajuste se aplica a <strong>cada parte del estudio</strong>: párrafos, preguntas, introducción y conclusión. Así, los párrafos más largos siguen teniendo más tiempo que los cortos, pero todo encaja en tu horario.</p>
+
+            <h3>Paso 4: El "Banco de Tiempo" en Vivo</h3>
+            <p>La aplicación es flexible. El tiempo que ganas o pierdes en la introducción y en las preguntas de repaso se transfiere al resto del estudio. Si eres rápido en la introducción, tendrás más tiempo para los párrafos.</p>
+
+            <div class="tip-box">
+                <h4>🎯 En Resumen</h4>
+                <p>La aplicación calcula un tiempo justo para cada parte y luego lo estira o encoge proporcionalmente para que quepa en tu horario, ajustándose en vivo según tu ritmo.</p>
             </div>
         </section>
 
@@ -541,26 +518,26 @@
         <section class="section" id="configuracion">
             <div class="section-header">
                 <div class="section-icon">⚙️</div>
-                <h2>Configuración de Tiempos <span class="badge-new">MEJORADO</span></h2>
+                <h2>Configuración de Tiempos</h2>
             </div>
             
             <p>Antes de cargar el PDF, puedes personalizar los parámetros de cálculo de tiempo según tu ritmo de conducción.</p>
 
-            <h3>Duración Total <span class="badge-new">NUEVO</span></h3>
+            <h3>Duración Total</h3>
             <p>Configura cuánto tiempo durará tu estudio:</p>
             <ul class="icon-list">
                 <li>
                     <div class="icon">⏱️</div>
                     <div class="text">
-                        <strong>Rango: 5 a 60 minutos</strong>
-                        <span>Usa el slider para ajustar. El valor predeterminado es 60 minutos.</span>
+                        <strong>Rango: 0 a 60 minutos</strong>
+                        <span>Usa el slider para ajustar.</span>
                     </div>
                 </li>
                 <li>
                     <div class="icon">🔗</div>
                     <div class="text">
-                        <strong>La hora de fin se calcula automáticamente</strong>
-                        <span>Hora de Inicio + Duración = Hora de Fin. Al cambiar la duración, la hora de fin se actualiza al instante.</span>
+                        <strong>Hora de Fin Automática:</strong>
+                        <span>La hora de fin se calcula automáticamente, pero puedes editarla manualmente haciendo clic en el icono del lápiz (✏️).</span>
                     </div>
                 </li>
             </ul>
@@ -615,102 +592,6 @@
             </div>
         </section>
 
-        <!-- HORARIOS -->
-        <section class="section" id="horarios">
-            <div class="section-header">
-                <div class="section-icon">🕐</div>
-                <h2>Horarios de Inicio y Fin <span class="badge-new">MEJORADO</span></h2>
-            </div>
-            
-            <p>La aplicación muestra de forma prominente las horas de inicio y fin del estudio, con la posibilidad de editar manualmente la hora de fin.</p>
-
-            <h3>Visualización de Horarios</h3>
-            <p>Los horarios se muestran en un panel oscuro con colores distintivos:</p>
-            
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0;">
-                <div class="color-indicator" style="background: #064e3b;">
-                    <span class="dot" style="background: #34d399;"></span>
-                    <span style="color: #34d399; font-weight: bold;">INICIO - Color Esmeralda</span>
-                </div>
-                <div class="color-indicator" style="background: #1e3a5f;">
-                    <span class="dot" style="background: #f97316;"></span>
-                    <span style="color: #f97316; font-weight: bold;">DURACIÓN - Color Naranja (automático)</span>
-                </div>
-                <div class="color-indicator" style="background: #164e63;">
-                    <span class="dot" style="background: #22d3ee;"></span>
-                    <span style="color: #22d3ee; font-weight: bold;">DURACIÓN - Color Cian (manual)</span>
-                </div>
-                <div class="color-indicator" style="background: #78350f;">
-                    <span class="dot" style="background: #fbbf24;"></span>
-                    <span style="color: #fbbf24; font-weight: bold;">FIN - Color Ámbar</span>
-                </div>
-            </div>
-
-            <h3>Editar Hora de Fin Manualmente <span class="badge-new">NUEVO</span></h3>
-            <p>Puedes definir manualmente la hora de fin del estudio:</p>
-            <ol>
-                <li>Haz clic en el <strong>ícono de lápiz (✏️)</strong> junto a la hora de fin</li>
-                <li>Ingresa la hora deseada en formato <strong>HH:MM</strong></li>
-                <li>Presiona <strong>✓</strong> para guardar o <strong>✗</strong> para cancelar</li>
-            </ol>
-            <p>Cuando defines una hora manual:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">🔢</div>
-                    <div class="text">
-                        <strong>La duración se calcula automáticamente</strong>
-                        <span>Se muestra en color cian cuántos minutos durará el estudio</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🏷️</div>
-                    <div class="text">
-                        <strong>Aparece la etiqueta "(manual)"</strong>
-                        <span>Para indicar que la hora fue configurada manualmente</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">↩️</div>
-                    <div class="text">
-                        <strong>Opción de restaurar</strong>
-                        <span>Puedes hacer clic en "Restaurar hora automática" para volver al cálculo basado en duración</span>
-                    </div>
-                </li>
-            </ul>
-
-            <h3>Relación con la Duración</h3>
-            <p>La hora de fin está directamente vinculada a la duración configurada:</p>
-            <div class="tip-box">
-                <h4>📐 Fórmula</h4>
-                <p><strong>Hora de Inicio + Duración = Hora de Fin</strong><br>
-                Ejemplo: Si empiezas a las 7:00 PM con duración de 45 min → Fin a las 7:45 PM<br><br>
-                <strong>O al revés (modo manual):</strong><br>
-                Hora de Fin - Hora de Inicio = Duración mostrada<br>
-                Ejemplo: Inicio 7:00 PM, Fin manual 7:30 PM → Duración: 30m (en cian)</p>
-            </div>
-
-            <h3>Vista Previa</h3>
-            <p>Antes de iniciar el cronómetro, verás una <strong>vista previa</strong> de los horarios (con opacidad reducida). Al presionar ▶ para iniciar, los horarios se confirman y se muestran con brillo completo.</p>
-
-            <h3>Ubicación</h3>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">📱</div>
-                    <div class="text">
-                        <strong>Vista Principal</strong>
-                        <span>Arriba del cronómetro de lectura, después de cargar un PDF</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🖥️</div>
-                    <div class="text">
-                        <strong>Modo Presentación</strong>
-                        <span>En la parte superior del panel, siempre visible</span>
-                    </div>
-                </li>
-            </ul>
-        </section>
-
         <!-- CARGAR PDF -->
         <section class="section" id="cargar-pdf">
             <div class="section-header">
@@ -760,7 +641,7 @@
             
             <p>El cronómetro es el corazón de la aplicación. Te permite controlar el tiempo durante la conducción del estudio.</p>
 
-            <h3>Controles del cronómetro</h3>
+            <h3>Controles Principales</h3>
             <table class="info-table">
                 <tr>
                     <th>Botón</th>
@@ -780,7 +661,7 @@
                 </tr>
             </table>
 
-            <h3>Indicadores de tiempo</h3>
+            <h3>Indicadores de Tiempo</h3>
             <div class="feature-grid">
                 <div class="feature-card">
                     <h4>⏱️ Tiempo Transcurrido</h4>
@@ -789,6 +670,10 @@
                 <div class="feature-card">
                     <h4>⏳ Tiempo Restante</h4>
                     <p>Muestra cuánto tiempo queda de la duración configurada. Se actualiza cada segundo.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚠️ Aviso de 5 Minutos <span class="badge-new">NUEVO</span></h4>
+                    <p>Un recuadro especial aparece cuando faltan 5 minutos, con una cuenta regresiva. Se vuelve rojo y cuenta hacia adelante si te pasas del tiempo.</p>
                 </div>
             </div>
         </section>
@@ -802,167 +687,25 @@
             
             <p>La sección "Desglose por párrafo" muestra cada párrafo del artículo con su información de tiempo.</p>
 
-            <h3>Distintivos de Contenido Extra <span class="badge-new">NUEVO v2.5</span></h3>
+            <h3>Distintivos de Contenido Extra</h3>
             <p>Cuando las preguntas de un párrafo incluyen referencias adicionales entre paréntesis, se muestran distintivos visuales en el encabezado del párrafo:</p>
             
             <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0;">
                 <div class="color-indicator" style="background: #f3e8ff; border-left: 4px solid #a855f7;">
                     <span class="dot" style="background: #a855f7;"></span>
-                    <span style="color: #7c3aed;"><strong>🖼️ Contiene imagen</strong> - Referencia a una ilustración</span>
+                    <span style="color: #7c3aed;"><strong>🖼️ Imagen</strong></span>
                 </div>
                 <div class="color-indicator" style="background: #dbeafe; border-left: 4px solid #3b82f6;">
                     <span class="dot" style="background: #3b82f6;"></span>
-                    <span style="color: #1e40af;"><strong>📖 Texto para leer</strong> - Cita bíblica para leer</span>
+                    <span style="color: #1e40af;"><strong>📖 Texto</strong></span>
+                </div>
+                <div class="color-indicator" style="background: #fef9c3; border-left: 4px solid #ca8a04;">
+                    <span class="dot" style="background: #ca8a04;"></span>
+                    <span style="color: #854d0e;"><strong>📝 Nota</strong></span>
                 </div>
             </div>
 
-            <ul class="icon-list">
-                <li>
-                    <div class="icon" style="background: #f3e8ff;">🖼️</div>
-                    <div class="text">
-                        <strong>Distintivo "Contiene imagen" (púrpura)</strong>
-                        <span>Aparece cuando la pregunta tiene texto como "(Vea también la imagen de la portada)" o "(Vea las imágenes)"</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon" style="background: #dbeafe;">📖</div>
-                    <div class="text">
-                        <strong>Distintivo "Texto para leer" (azul)</strong>
-                        <span>Aparece cuando la pregunta incluye una referencia bíblica como "(Marcos 3:1-6)" o "(Juan 3:16)"</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">📍</div>
-                    <div class="text">
-                        <strong>Ubicación del distintivo</strong>
-                        <span>Se muestra en el encabezado del párrafo, entre "Párrafo N" y el tiempo estimado</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🔍</div>
-                    <div class="text">
-                        <strong>Detección automática</strong>
-                        <span>El sistema extrae automáticamente el contenido entre paréntesis después del signo "?" de las preguntas</span>
-                    </div>
-                </li>
-            </ul>
-
-            <div class="tip-box">
-                <h4>💡 ¿Para qué sirven estos distintivos?</h4>
-                <p>Te permiten saber de un vistazo si el párrafo requiere:<br>
-                • <strong>🖼️ Mostrar una imagen</strong>: Prepara la imagen antes de llegar al párrafo<br>
-                • <strong>📖 Leer un texto bíblico</strong>: Ten la Biblia lista para la lectura adicional</p>
-            </div>
-
-            <h3>Cronómetro por Párrafo</h3>
-            <p>Cada párrafo tiene su propio cronómetro que te indica si vas en tiempo:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">⏱️</div>
-                    <div class="text">
-                        <strong>Formato: tiempo actual / tiempo estimado</strong>
-                        <span>Ejemplo: 0:45 / 2:30 significa que llevas 45 segundos de los 2 minutos 30 segundos estimados</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🔄</div>
-                    <div class="text">
-                        <strong>Se reinicia automáticamente</strong>
-                        <span>Al presionar "Siguiente Párrafo", el cronómetro se reinicia para el nuevo párrafo</span>
-                    </div>
-                </li>
-            </ul>
-
-            <h3>Indicadores visuales</h3>
-            <p>Los párrafos cambian de color según el estado:</p>
-            <div style="margin: 20px 0;">
-                <span class="color-indicator color-green">
-                    <span class="dot"></span>
-                    <strong>Verde:</strong> Párrafo actual (LEYENDO)
-                </span>
-                <span class="color-indicator color-red">
-                    <span class="dot"></span>
-                    <strong>Rojo:</strong> Tiempo excedido (TIEMPO EXCEDIDO)
-                </span>
-                <span class="color-indicator color-gray">
-                    <span class="dot"></span>
-                    <strong>Gris:</strong> Párrafos completados
-                </span>
-            </div>
-
-            <h3>Encabezado Minimalista <span class="badge-new">ACTUALIZADO</span></h3>
-            <p>El encabezado del párrafo activo ahora es más limpio y ordenado:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">📝</div>
-                    <div class="text">
-                        <strong>Texto simplificado: "LEYENDO"</strong>
-                        <span>En lugar del texto largo anterior, ahora solo dice "LEYENDO" para una visualización más limpia</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">⏱️</div>
-                    <div class="text">
-                        <strong>Timer en formato compacto</strong>
-                        <span>El cronómetro se muestra como una pill: <code>0:45 / 2:30</code></span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">⚠️</div>
-                    <div class="text">
-                        <strong>Badge de exceso separado</strong>
-                        <span>Cuando excedes el tiempo, el badge aparece en una fila separada para no desbordar</span>
-                    </div>
-                </li>
-            </ul>
-
-            <h3>Alerta de Tiempo Excedido <span class="badge-new">NUEVO</span></h3>
-            <p>Cuando excedes el tiempo estimado del párrafo:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">🔴</div>
-                    <div class="text">
-                        <strong>La barra cambia a rojo</strong>
-                        <span>El texto cambia de "LEYENDO Y DESARROLLANDO AHORA" a "⚠️ TIEMPO EXCEDIDO"</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">📢</div>
-                    <div class="text">
-                        <strong>Badge de tiempo excedido</strong>
-                        <span>Aparece un indicador mostrando cuánto tiempo de más llevas (ej: "+0:45 excedido")</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🔔</div>
-                    <div class="text">
-                        <strong>Alerta sonora/vibración</strong>
-                        <span>Si está habilitada, recibirás una alerta al exceder el tiempo</span>
-                    </div>
-                </li>
-            </ul>
-
-            <h3>Controles de navegación</h3>
-            <table class="info-table">
-                <tr>
-                    <th>Acción</th>
-                    <th>Descripción</th>
-                </tr>
-                <tr>
-                    <td><strong>Anterior / Siguiente</strong></td>
-                    <td>Botones para moverte al párrafo anterior o siguiente</td>
-                </tr>
-                <tr>
-                    <td><strong>Siguiente Párrafo</strong></td>
-                    <td>Botón verde que avanza al siguiente y guarda estadísticas del actual</td>
-                </tr>
-                <tr>
-                    <td><strong>Iniciar desde aquí</strong></td>
-                    <td>Permite comenzar el cronómetro desde cualquier párrafo específico</td>
-                </tr>
-            </table>
-
-            <h3>Párrafos Agrupados <span class="badge-new">NUEVO</span></h3>
+            <h3>Párrafos Agrupados</h3>
             <p>Cuando una pregunta corresponde a varios párrafos (formato "1, 2."), estos se muestran agrupados:</p>
             <ul class="icon-list">
                 <li>
@@ -987,167 +730,6 @@
                     </div>
                 </li>
             </ul>
-        </section>
-
-        <!-- PREGUNTAS DE REPASO -->
-        <section class="section" id="preguntas-repaso">
-            <div class="section-header">
-                <div class="section-icon">❓</div>
-                <h2>Preguntas de Repaso y Palabras de Conclusión <span class="badge-new">ACTUALIZADO</span></h2>
-            </div>
-            
-            <p>Después del último párrafo, la aplicación te guía a través de las preguntas de repaso y las palabras de conclusión.</p>
-
-            <h3>Flujo de las Preguntas de Repaso</h3>
-            <div class="steps">
-                <div class="step-item">
-                    <div class="step-number" style="background: #22c55e;">1</div>
-                    <div class="step-content">
-                        <h4>Último párrafo → "Pasar a Preguntas de Repaso"</h4>
-                        <p>Al terminar el último párrafo, presiona este botón verde para iniciar las preguntas</p>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-number" style="background: #ef4444;">2</div>
-                    <div class="step-content">
-                        <h4>Responder cada pregunta → "Siguiente Pregunta"</h4>
-                        <p>Cada pregunta tiene su cronómetro. Presiona "Siguiente Pregunta" para avanzar</p>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-number" style="background: #a855f7;">3</div>
-                    <div class="step-content">
-                        <h4>Última pregunta → "Palabras de Conclusión"</h4>
-                        <p>En la última pregunta, el botón cambia a púrpura y dice "Palabras de Conclusión"</p>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-number" style="background: #22c55e;">4</div>
-                    <div class="step-content">
-                        <h4>Conclusión → "Finalizar Estudio"</h4>
-                        <p>La sección púrpura tiene un botón verde grande para terminar el estudio</p>
-                    </div>
-                </div>
-            </div>
-
-            <h3>Sección de Palabras de Conclusión <span class="badge-new">NUEVO</span></h3>
-            <p>La sección de conclusión tiene las siguientes características:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon" style="background: #e9d5ff;">✨</div>
-                    <div class="text">
-                        <strong>Encabezado púrpura: "PALABRAS DE CONCLUSIÓN"</strong>
-                        <span>Con cronómetro individual mostrando tiempo actual / 1:00</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon" style="background: #e9d5ff;">🎤</div>
-                    <div class="text">
-                        <strong>Icono de estrella</strong>
-                        <span>Representa el momento especial de cierre del estudio</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon" style="background: #dcfce7;">🎉</div>
-                    <div class="text">
-                        <strong>Botón "Finalizar Estudio"</strong>
-                        <span>Botón verde con iconos de celebración para concluir</span>
-                    </div>
-                </li>
-            </ul>
-
-            <h3>Estados de las Preguntas</h3>
-            <div style="margin: 20px 0;">
-                <span class="color-indicator" style="background: #dcfce7; border-left: 4px solid #22c55e;">
-                    <span class="dot" style="background: #22c55e;"></span>
-                    <span style="color: #166534;"><strong>Verde:</strong> RESPONDIENDO - pregunta actual</span>
-                </span>
-                <span class="color-indicator" style="background: #fee2e2; border-left: 4px solid #ef4444;">
-                    <span class="dot" style="background: #ef4444;"></span>
-                    <span style="color: #b91c1c;"><strong>Rojo:</strong> TIEMPO EXCEDIDO</span>
-                </span>
-                <span class="color-indicator" style="background: #f1f5f9; border-left: 4px solid #64748b;">
-                    <span class="dot" style="background: #64748b;"></span>
-                    <span style="color: #475569;"><strong>Gris:</strong> COMPLETADA</span>
-                </span>
-            </div>
-
-            <div class="tip-box">
-                <h4>💡 Consejo</h4>
-                <p>La sección de "Palabras de Conclusión" aparece atenuada mientras respondes las preguntas, mostrando que es el siguiente paso. Cuando llegas a ella, se activa con el cronómetro.</p>
-            </div>
-        </section>
-
-        <!-- ESTADÍSTICAS -->
-        <section class="section" id="estadisticas">
-            <div class="section-header">
-                <div class="section-icon">📊</div>
-                <h2>Panel de Estadísticas <span class="badge-new">NUEVO</span></h2>
-            </div>
-            
-            <p>El panel de estadísticas te muestra una comparativa entre el tiempo estimado y el tiempo real que invertiste en cada párrafo.</p>
-
-            <h3>¿Cuándo aparece?</h3>
-            <p>El panel se muestra automáticamente después de completar al menos un párrafo (presionando "Siguiente Párrafo").</p>
-
-            <h3>Información del resumen</h3>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>⏱️ Tiempo Estimado</h4>
-                    <p>Suma del tiempo estimado de todos los párrafos completados</p>
-                </div>
-                <div class="feature-card">
-                    <h4>⏱️ Tiempo Real</h4>
-                    <p>Tiempo que realmente invertiste en esos párrafos</p>
-                </div>
-                <div class="feature-card">
-                    <h4>📈 Diferencia</h4>
-                    <p>Cuánto tiempo de más o de menos usaste respecto al estimado</p>
-                </div>
-            </div>
-
-            <h3>Indicadores de tendencia</h3>
-            <div style="margin: 20px 0;">
-                <span class="color-indicator color-green">
-                    <span class="dot"></span>
-                    <strong>Verde (↘):</strong> Fuiste más rápido que el estimado
-                </span>
-                <span class="color-indicator color-red">
-                    <span class="dot"></span>
-                    <strong>Rojo (↗):</strong> Fuiste más lento que el estimado
-                </span>
-            </div>
-
-            <h3>Desglose por párrafo</h3>
-            <p>Cada fila del panel muestra:</p>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">🔢</div>
-                    <div class="text">
-                        <strong>Número de párrafo y palabras</strong>
-                        <span>Ejemplo: P1 | 104 palabras</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">❓</div>
-                    <div class="text">
-                        <strong>Cantidad de preguntas</strong>
-                        <span>Badge indicando cuántas preguntas tiene el párrafo</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">⏱️</div>
-                    <div class="text">
-                        <strong>Est / Real / Diferencia</strong>
-                        <span>Tiempos estimado, real y la diferencia con indicador de color</span>
-                    </div>
-                </li>
-            </ul>
-
-            <div class="tip-box">
-                <h4>💡 Consejo</h4>
-                <p>Usa estas estadísticas para ajustar tu configuración de tiempos en futuros estudios. Si consistentemente vas más lento, considera usar velocidad "Rápido".</p>
-            </div>
         </section>
 
         <!-- ALERTAS -->
@@ -1177,8 +759,13 @@
                     <td>On/Off</td>
                 </tr>
                 <tr>
-                    <td><strong>⏱️ Alerta exceso de tiempo</strong> <span class="badge-new">NUEVO</span></td>
+                    <td><strong>⏱️ Alerta exceso de tiempo</strong></td>
                     <td>Avisa cuando excedes el tiempo estimado de un párrafo</td>
+                    <td>On/Off</td>
+                </tr>
+                <tr>
+                    <td><strong>⚠️ Aviso de 5 minutos</strong> <span class="badge-new">NUEVO</span></td>
+                    <td>Muestra una alerta dinámica cuando faltan 5 minutos para el fin</td>
                     <td>On/Off</td>
                 </tr>
             </table>
@@ -1212,7 +799,7 @@
         <section class="section" id="presentacion">
             <div class="section-header">
                 <div class="section-icon">🖥️</div>
-                <h2>Modo Presentación <span class="badge-new">ACTUALIZADO</span></h2>
+                <h2>Modo Presentación</h2>
             </div>
             
             <p>El modo presentación ofrece una vista de pantalla completa optimizada para mostrar durante el estudio.</p>
@@ -1239,20 +826,8 @@
             
             <h4>Barra Superior</h4>
             <ul class="icon-list">
-                <li>
-                    <div class="icon">🕐</div>
-                    <div class="text">
-                        <strong>Hora de Inicio y Fin</strong>
-                        <span>Muestra la hora en que iniciaste y la hora estimada de finalización (60 minutos después)</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">🎨</div>
-                    <div class="text">
-                        <strong>Selector de Tema</strong>
-                        <span>Cambia entre diferentes esquemas de colores (Oscuro, Claro, Azul, Verde, Púrpura, Cálido, Alto Contraste)</span>
-                    </div>
-                </li>
+                <li><div class="icon">🕐</div><div class="text"><strong>Hora Actual y Hora de Fin:</strong> Siempre visibles para mantener el control.</div></li>
+                <li><div class="icon">❌</div><div class="text"><strong>Botón de Salir:</strong> Ubicado en la esquina superior derecha para cerrar el modo presentación.</div></li>
             </ul>
 
             <h4>Cronómetros Principales</h4>
@@ -1260,194 +835,64 @@
                 <li>
                     <div class="icon">⏱️</div>
                     <div class="text">
-                        <strong>Transcurrido</strong>
-                        <span>Tiempo que ha pasado desde el inicio (en naranja cuando está corriendo)</span>
+                        <strong>Transcurrido y Restante:</strong> Grandes y claros en la parte superior.
                     </div>
                 </li>
                 <li>
                     <div class="icon">⏳</div>
                     <div class="text">
-                        <strong>Restante (con colores dinámicos)</strong>
-                        <span><strong>Verde</strong> cuando hay suficiente tiempo. <strong>Rojo</strong> cuando quedan menos de 5 minutos. Si pasa de 60 minutos, <strong>sigue contando en negativo</strong> hasta que lo detengas.</span>
+                        <strong>Cronómetro de Sección:</strong> Un cuadro central que cambia de color (verde, naranja, rojo) y muestra el tiempo del párrafo o sección actual.
                     </div>
                 </li>
             </ul>
 
-            <h4>Barra de Progreso</h4>
+            <h4>Barra de Progreso <span class="badge-new">NUEVO</span></h4>
             <ul class="icon-list">
                 <li>
                     <div class="icon">📊</div>
                     <div class="text">
-                        <strong>Indicador visual con colores</strong>
-                        <span><strong>Verde</strong> durante el estudio normal. <strong>Rojo</strong> cuando quedan menos de 5 minutos. El porcentaje se muestra grande y visible debajo de la barra.</span>
+                        <strong>Indicador visual del progreso total del estudio.</strong>
+                        <span>La barra es amarilla y muestra el porcentaje en su interior.</span>
                     </div>
                 </li>
             </ul>
 
-            <h4>Panel de Párrafo Actual</h4>
-            <ul class="icon-list">
-                <li>
-                    <div class="icon">📋</div>
-                    <div class="text">
-                        <strong>Párrafo X de Y</strong>
-                        <span>Indica el número del párrafo actual y el total de párrafos del artículo</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">📝</div>
-                    <div class="text">
-                        <strong>Párrafos restantes</strong>
-                        <span>Cantidad de párrafos que faltan por leer (en naranja)</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="icon">❓</div>
-                    <div class="text">
-                        <strong>Preguntas de repaso</strong>
-                        <span>Cantidad de preguntas finales de repaso que quedan (en rojo)</span>
-                    </div>
-                </li>
-            </ul>
-
-            <div class="new-feature">
-                <h4>🆕 Cambios Recientes (v2.3)</h4>
-                <p>• <strong>Hora de Inicio y Fin</strong> siempre visibles con colores distintivos (esmeralda y ámbar)<br>
-                • <strong>Duración en el centro</strong> mostrada en naranja para indicar que es configurable<br>
-                • Cronómetro "Restante" en verde que cambia a rojo automáticamente<br>
-                • Continúa contando en negativo si superas el tiempo configurado<br>
-                • Diseño totalmente responsivo para móviles en horizontal<br>
-                • Panel de párrafo muestra estadísticas de lo que queda</p>
-            </div>
-
-            <h3>Atajos de teclado</h3>
-            <table class="info-table">
-                <tr>
-                    <th>Tecla</th>
-                    <th>Acción</th>
-                </tr>
-                <tr>
-                    <td><span class="keyboard-shortcut">Espacio</span></td>
-                    <td>Iniciar o pausar el cronómetro</td>
-                </tr>
-                <tr>
-                    <td><span class="keyboard-shortcut">ESC</span></td>
-                    <td>Salir del modo presentación</td>
-                </tr>
-            </table>
-        </section>
-
-        <!-- EXPORTAR -->
-        <section class="section" id="exportar">
-            <div class="section-header">
-                <div class="section-icon">📥</div>
-                <h2>Exportar el Programa</h2>
-            </div>
-            
-            <p>Puedes exportar el programa de tiempos para guardarlo o imprimirlo.</p>
-
-            <h3>Formatos disponibles</h3>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>🖼️ Exportar como imagen (PNG)</h4>
-                    <p>Genera una imagen del programa completo. Ideal para compartir por WhatsApp.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>📄 Exportar como PDF</h4>
-                    <p>Crea un documento PDF del programa. Perfecto para imprimir.</p>
-                </div>
-            </div>
-
-            <div class="tip-box">
-                <h4>💡 Consejo</h4>
-                <p>Exporta el programa antes de iniciar el cronómetro si deseas tener una copia con los tiempos originales.</p>
-            </div>
-        </section>
-
-        <!-- ACTUALIZAR APP -->
-        <section class="section" id="actualizar">
-            <div class="section-header">
-                <div class="section-icon">🔄</div>
-                <h2>Cómo Actualizar la Aplicación <span class="badge-new">NUEVO</span></h2>
-            </div>
-            
-            <p>Si ya tienes la aplicación instalada y quieres obtener la última versión, sigue estos pasos según tu dispositivo:</p>
-
-            <h3>📱 En Android</h3>
-            
-            <h4>Opción 1: Actualización automática</h4>
-            <ol>
-                <li>Cierra completamente la aplicación (no solo minimizarla)</li>
-                <li>Espera unos minutos (el Service Worker buscará actualizaciones)</li>
-                <li>Abre la aplicación de nuevo</li>
-            </ol>
-
-            <h4>Opción 2: Forzar actualización</h4>
-            <ol>
-                <li>Abre la app</li>
-                <li>Desliza hacia abajo para refrescar (pull-to-refresh)</li>
-                <li>O cierra y abre la app 2-3 veces</li>
-            </ol>
-
-            <h4>Opción 3: Limpiar caché (más efectivo)</h4>
-            <ol>
-                <li>Ve a <strong>Configuración → Aplicaciones → Atalaya Timer</strong></li>
-                <li>Toca <strong>Almacenamiento</strong></li>
-                <li>Toca <strong>Borrar caché</strong> (NO borrar datos)</li>
-                <li>Abre la aplicación de nuevo</li>
-            </ol>
-
-            <h4>Opción 4: Reinstalar (garantizado)</h4>
-            <ol>
-                <li>Desinstala la aplicación desde tu pantalla de inicio</li>
-                <li>Abre Chrome y visita la URL de la app</li>
-                <li>Instálala de nuevo (menú → "Instalar aplicación")</li>
-            </ol>
-
-            <h3>🍎 En iPhone / iPad</h3>
-            <ol>
-                <li>Elimina el ícono de la pantalla de inicio</li>
-                <li>Abre Safari y visita la URL de la app</li>
-                <li>Toca el botón Compartir (□↑)</li>
-                <li>Selecciona "Añadir a pantalla de inicio"</li>
-            </ol>
-
-            <h3>💻 En navegador de escritorio</h3>
-            <p>Presiona <span class="keyboard-shortcut">Ctrl + Shift + R</span> (Windows/Linux) o <span class="keyboard-shortcut">Cmd + Shift + R</span> (Mac) para forzar una recarga completa sin caché.</p>
-
-            <div class="tip-box">
-                <h4>💡 Recomendación</h4>
-                <p>La <strong>Opción 3</strong> (limpiar caché) o la <strong>Opción 4</strong> (reinstalar) son las más seguras para asegurar que tengas la última versión con todas las mejoras.</p>
-            </div>
+            <h3>Atajos de Teclado</h3>
+            <p>Presiona <span class="keyboard-shortcut">ESC</span> para salir del modo presentación.</p>
         </section>
 
         <!-- ENLACES -->
         <section class="section">
             <div class="section-header">
-                <div class="section-icon">🔗</div>
-                <h2>Enlaces de Instalación</h2>
+                <div class="section-icon">❓</div>
+                <h2>Preguntas Frecuentes</h2>
             </div>
             
-            <p>Instala la aplicación en tu dispositivo para usarla sin conexión:</p>
-            
-            <h3>Android</h3>
-            <p>Abre en Chrome → Menú (⋮) → "Instalar aplicación"</p>
+            <h3>¿Por qué no se reconoce una pregunta?</h3>
+            <p>La aplicación reconoce como pregunta cualquier línea que empiece con un número seguido de un punto (ej: "15. Explique...") o que termine con un signo de interrogación (?). Si una pregunta no sigue este formato, no será detectada.</p>
 
-            <h3>iPhone / iPad</h3>
-            <p>Abre en Safari → Compartir (□↑) → "Añadir a pantalla de inicio"</p>
+            <h3>¿Cómo se actualiza la aplicación?</h3>
+            <p>En un navegador de escritorio, la forma más efectiva es forzar una recarga completa presionando <span class="keyboard-shortcut">Ctrl + Shift + R</span> (en Windows/Linux) o <span class="keyboard-shortcut">Cmd + Shift + R</span> (en Mac).</p>
 
-            <h3>PC (Windows/Mac/Linux)</h3>
-            <p>Abre en Chrome/Edge → Clic en icono (⊕) en la barra de direcciones</p>
+            <h3>¿Puedo usar la aplicación sin conexión?</h3>
+            <p>Sí. Una vez que la hayas visitado por primera vez, la aplicación se guarda en tu dispositivo y puedes usarla sin necesidad de estar conectado a internet.</p>
+        </section>
+
+        <!-- ENLACES -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-icon">🚀</div>
+                <h2>¡Listo para empezar!</h2>
+            </div>
             
             <div style="margin-top: 20px;">
                 <a href="/" class="btn-link">📱 Abrir Aplicación</a>
-                <a href="/descargar-app.html" class="btn-link secondary">📥 Guía de Instalación</a>
-                <a href="/guia-apk.html" class="btn-link secondary">📦 Generar APK</a>
             </div>
         </section>
     </div>
 
     <div class="footer">
-        <p>Manual de Usuario - Calculadora de Tiempo Atalaya de Estudio v2.5</p>
+        <p>Manual de Usuario - WT Time Controller v3.0</p>
         <a href="/" class="btn-link" style="margin: 0;">🚀 Ir a la Aplicación</a>
     </div>
 </body>
