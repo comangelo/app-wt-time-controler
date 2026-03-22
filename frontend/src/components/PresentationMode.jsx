@@ -15,6 +15,7 @@ import {
   Image,
   MessageCircleQuestion,
   Star,
+  AlertCircle,
 } from "lucide-react";
 import { formatTime, formatClockTime } from "@/utils/timeFormatters";
 
@@ -55,6 +56,7 @@ export default function PresentationMode({
                                            currentParagraphGroup,
                                            groupedParagraphs,
                                            totalDurationSeconds = 3600,
+                                           fiveMinuteWarningEnabled = true,
                                            getAdjustedParagraphTimes,
                                          }) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -66,6 +68,35 @@ export default function PresentationMode({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const warningMessageParts = useMemo(() => {
+    if (!fiveMinuteWarningEnabled) return null;
+
+    if (remainingTime <= 300 && remainingTime > 0) {
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      return {
+        isOvertime: false,
+        prefix: 'EN',
+        number: `${minutes}:${String(seconds).padStart(2, '0')}`,
+        suffix: `DEBE CONCLUIR`
+      };
+    }
+
+    if (remainingTime <= 0) {
+      const totalSecondsOver = Math.abs(remainingTime);
+      const minutes = Math.floor(totalSecondsOver / 60);
+      const seconds = totalSecondsOver % 60;
+      return {
+        isOvertime: true,
+        prefix: null,
+        number: `${minutes}:${String(seconds).padStart(2, '0')}`,
+        suffix: `MINUTOS EXCEDIDOS`
+      };
+    }
+
+    return null;
+  }, [remainingTime, fiveMinuteWarningEnabled]);
 
   const { phaseInfo, estimatedTime } = useMemo(() => {
     let info = { title: "Esperando para iniciar", icon: Play, subtitle: "Presiona Iniciar Estudio", estimated: 0 };
@@ -289,10 +320,30 @@ export default function PresentationMode({
                   </div>
               )}
 
-              <div className={`w-full max-w-[17rem] rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 py-14 px-6 landscape:py-3 landscape:px-2 shadow-2xl ${colorClass}`}>
+              <div className={`w-full max-w-[17rem] rounded-2xl flex flex-col items-center justify-center transition-colors duration-500 py-8 px-6 landscape:py-3 landscape:px-2 shadow-2xl ${colorClass}`}>
                 <p className="text-white text-lg md:text-2xl landscape:text-base font-bold tracking-widest">{indicatorText}</p>
                 <p className="text-white text-4xl md:text-6xl landscape:text-4xl font-light" style={{ fontFamily: 'system-ui' }}>{formatTime(phaseElapsedTime)}</p>
                 <p className="text-white/70 text-lg md:text-2xl landscape:text-base font-light">/ {formatTime(Math.round(estimatedTime))}</p>
+
+                {/* Dynamic Countdown/Count-up Warning */}
+                {warningMessageParts && (
+                    <div className="mt-4 pt-4 border-t border-white/20 w-full text-center">
+                        <div className={`flex items-center justify-center gap-2 animate-pulse ${
+                            warningMessageParts.isOvertime
+                                ? 'text-red-300'
+                                : 'text-yellow-300'
+                        }`}>
+                            <AlertCircle className="w-5 h-5" />
+                            <div className="font-bold text-sm uppercase tracking-wider">
+                                {warningMessageParts.prefix && <span>{warningMessageParts.prefix} </span>}
+                                <span className="text-2xl text-white font-black mx-1 tabular-nums">
+                                    {warningMessageParts.number}
+                                </span>
+                                <span> {warningMessageParts.suffix}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
               </div>
               <div className="text-center mt-4 landscape:mt-2">
                 <p className="text-2xl md:text-3xl landscape:text-xl font-black uppercase tracking-wider">{phaseInfo.title}</p>
