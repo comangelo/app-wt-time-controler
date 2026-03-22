@@ -1582,6 +1582,7 @@ export default function HomePage() {
           currentParagraphGroup={currentParagraphGroup}
           groupedParagraphs={groupedParagraphs}
           totalDurationSeconds={totalDurationSeconds}
+          fiveMinuteWarningEnabled={fiveMinuteWarningEnabled}
           getAdjustedParagraphTimes={getAdjustedParagraphTimes}
         />
       )}
